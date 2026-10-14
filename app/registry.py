@@ -7,6 +7,26 @@ import httpx
 
 from app.core import AuditContext, CheckResult, Finding, BROWSER_UA, ThrottledTransport
 
+CHALLENGE_MARKERS = (
+    "one moment, please",      # Imunify360 / LiteSpeed
+    "just a moment...",        # Cloudflare
+    "cf-chl-",                 # Cloudflare challenge
+    "checking your browser",
+    "ddos-guard",
+    "verify you are human",
+    "attention required! | cloudflare",
+)
+
+
+def detect_challenge(html: str) -> str | None:
+    """Вернуть маркер, если вместо сайта отдана антибот-заглушка."""
+    head = (html or "")[:20000].lower()
+    for marker in CHALLENGE_MARKERS:
+        if marker in head:
+            return marker
+    return None
+
+
 CHECKS: List[Callable[[AuditContext], Awaitable[CheckResult]]] = []
 
 
@@ -38,6 +58,30 @@ async def run_audit(
     )
 
     ctx = AuditContext(url=url, keywords=keywords, client=client)
+
+    # Антибот-заглушка делает все остальные проверки недостоверными — останавливаемся
+    home = await ctx.home()
+    marker = detect_challenge(home.text) if home is not None else None
+    if marker:
+        await client.aclose()
+        finding = Finding(
+            level="critical",
+            text=f"Сайт отдаёт антибот-заглушку вместо контента (маркер: «{marker}»). "
+                 "Аудит остановлен: результаты проверок были бы недостоверны. "
+                 "Так же сайт видят и AI-краулеры с этого IP.",
+            fix="Повторить проверку позже или с другого IP; добавить IP сканера в белый список WAF/Imunify/Cloudflare. "
+                "Если заглушку получают и поисковые/AI-боты — ослабить правила антибот-защиты.",
+            hours=1.0,
+        )
+        blocked = CheckResult(id="anti_bot_challenge", title="Антибот-защита сайта", category="Доступность",
+                              status="critical", score=0, findings=[finding], raw={"marker": marker})
+        return {
+            "url": ctx.url, "base": ctx.base, "host": ctx.host, "overall_score": 0, "blocked": True,
+            "checks": [blocked.to_dict()],
+            "plan": {"findings": [{"check_id": blocked.id, "check_title": blocked.title, "level": "critical",
+                                   "text": finding.text, "fix": finding.fix, "hours": finding.hours}],
+                     "total_hours": finding.hours},
+        }
     semaphore = asyncio.Semaphore(8)
 
     async def run_one(fn: Callable[[AuditContext], Awaitable[CheckResult]]) -> CheckResult:

@@ -53,3 +53,12 @@ async def test_run_audit_error_wrapping(monkeypatch):
     # exception text should be in findings
     findings_text = " ".join(f["text"] for f in checks[0]["findings"])
     assert "boom" in findings_text
+
+
+@pytest.mark.asyncio
+async def test_run_audit_stops_on_antibot_challenge():
+    page = b"<html><head><title>One moment, please...</title></head><body></body></html>"
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=page))
+    result = await run_audit("example.com", transport=transport)
+    assert result["blocked"] is True
+    assert [c["id"] for c in result["checks"]] == ["anti_bot_challenge"]
