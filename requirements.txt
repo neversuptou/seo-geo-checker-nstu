@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+httpx
+selectolax
+dnspython
+jinja2
+pytest
+pytest-asyncio

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO/GEO Аудит</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --card-bg: #f9f9f9;
+            --border: #e0e0e0;
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --critical: #ef4444;
+            --info: #6b7280;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #111827;
+                --text: #f9fafb;
+                --card-bg: #1f2937;
+                --border: #374151;
+                --primary: #3b82f6;
+                --success: #34d399;
+                --warning: #fbbf24;
+                --critical: #f87171;
+                --info: #9ca3af;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { margin: 0 0 24px 0; font-size: 24px; }
+        .form { display: grid; gap: 12px; background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr; gap: 8px; }
+        @media (min-width: 640px) { .form-row { grid-template-columns: 2fr 1fr 1fr auto; align-items: end; } }
+        label { font-size: 12px; color: var(--info); display: block; margin-bottom: 4px; }
+        input[type=text] { padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); width: 100%; }
+        button { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .spinner { display: none; margin-left: 8px; }
+        .spinner.active { display: inline-block; }
+        .score { font-size: 32px; font-weight: bold; margin: 16px 0; }
+        .cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media (min-width: 768px) { .cards { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+        .card h3 { margin: 0 0 8px 0; font-size: 16px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+        .badge.ok { background: var(--success); color: white; }
+        .badge.warning { background: var(--warning); color: white; }
+        .badge.critical, .badge.error { background: var(--critical); color: white; }
+        .badge.info, .badge.skipped { background: var(--info); color: white; }
+        .finding { font-size: 13px; margin-bottom: 6px; padding: 6px; background: var(--bg); border-radius: 4px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px; border: 1px solid var(--border); text-align: left; }
+        th { background: var(--card-bg); }
+        .history { margin-top: 20px; }
+        .history-item { padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 4px; cursor: pointer; background: var(--card-bg); font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SEO/GEO Аудит сайта</h1>
+        <div class="form">
+            <div class="form-row">
+                <div>
+                    <label for="url">URL сайта</label>
+                    <input type="text" id="url" placeholder="example.com или https://example.com">
+                </div>
+                <div>
+                    <label for="keywords">Ключевые слова (через запятую)</label>
+                    <input type="text" id="keywords" placeholder="ключ1, ключ2">
+                </div>
+                <div>
+                    <label for="competitor">URL конкурента (опц.)</label>
+                    <input type="text" id="competitor" placeholder="конкурент.com">
+                </div>
+                <div>
+                    <button id="runBtn">Проверить</button>
+                </div>
+            </div>
+            <div>
+                <span id="spinner" class="spinner">⏳</span>
+            </div>
+        </div>
+
+        <div id="result" style="display:none">
+            <div class="score">Общий балл: <span id="overall">0</span>/100</div>
+
+            <h2>План работ</h2>
+            <table id="planTable">
+                <thead><tr><th>Проверка</th><th>Проблема</th><th>Как исправить</th><th>Часы</th></tr></thead>
+                <tbody></tbody>
+                <tfoot><tr><td colspan="3"><strong>Итого</strong></td><td id="totalHours">0</td></tr></tfoot>
+            </table>
+
+            <h2>Проверки</h2>
+            <div id="checks" class="cards"></div>
+
+            <div id="comparison" style="display:none; margin-top:20px">
+                <h2>Сравнение с конкурентом</h2>
+                <table><thead><tr><th>Метрика</th><th>Ваш сайт</th><th>Конкурент</th></tr></thead><tbody id="cmpBody"></tbody></table>
+            </div>
+
+            <div style="margin-top:16px">
+                <button id="exportMd">Экспорт Markdown</button>
+                <button id="exportJson" style="margin-left:8px">Экспорт JSON</button>
+            </div>
+        </div>
+
+        <div class="history">
+            <h2>История</h2>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentAudit = null;
+        let currentCompetitor = null;
+        let lastId = null;
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        async function loadHistory() {
+            const res = await fetch('/api/audits');
+            const data = await res.json();
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            data.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.textContent = `${a.id}: ${a.url} (${a.score}/100) ${a.created_at}`;
+                div.onclick = () => loadAudit(a.id);
+                list.appendChild(div);
+            });
+        }
+
+        async function loadAudit(id) {
+            const res = await fetch(`/api/audits/${id}`);
+            const data = await res.json();
+            lastId = data.id;
+            render(data.result, data.competitor || null);
+        }
+
+        function render(result, competitor) {
+            currentAudit = result;
+            currentCompetitor = competitor;
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('overall').textContent = result.overall_score;
+            renderPlan(result.plan);
+            renderChecks(result.checks);
+            renderComparison(result, competitor);
+        }
+
+        function renderPlan(plan) {
+            const tbody = document.querySelector('#planTable tbody');
+            tbody.innerHTML = '';
+            (plan.findings || []).forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${escapeHtml(p.check_title)}</td><td>${escapeHtml(p.text)}</td><td>${escapeHtml(p.fix || '')}</td><td>${p.hours}</td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('totalHours').textContent = plan.total_hours || 0;
+        }
+
+        function renderChecks(checks) {
+            const container = document.getElementById('checks');
+            container.innerHTML = '';
+            const grouped = {};
+            (checks || []).forEach(c => {
+                if (!grouped[c.category]) grouped[c.category] = [];
+                grouped[c.category].push(c);
+            });
+            Object.keys(grouped).sort().forEach(cat => {
+                const section = document.createElement('div');
+                section.innerHTML = `<h3>${escapeHtml(cat)}</h3>`;
+                grouped[cat].forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    let html = `<span class="badge ${escapeHtml(c.status)}">${escapeHtml(c.status)}</span> <strong>${escapeHtml(c.title)}</strong> (балл: ${c.score})`;
+                    if (c.findings && c.findings.length) {
+                        c.findings.forEach(f => {
+                            html += `<div class="finding"><strong>${escapeHtml(f.level)}</strong>: ${escapeHtml(f.text)}`;
+                            if (f.fix) html += `<br><em>Как исправить: ${escapeHtml(f.fix)}</em>`;
+                            html += `</div>`;
+                        });
+                    }
+                    card.innerHTML = html;
+                    section.appendChild(card);
+                });
+                container.appendChild(section);
+            });
+        }
+
+        function renderComparison(result, competitor) {
+            const cmp = document.getElementById('comparison');
+            if (!competitor) { cmp.style.display = 'none'; return; }
+            cmp.style.display = 'block';
+            const body = document.getElementById('cmpBody');
+            body.innerHTML = '';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>Общий балл</td><td>${result.overall_score}</td><td>${competitor.overall_score !== undefined ? competitor.overall_score : 'N/A'}</td>`;
+            body.appendChild(tr);
+        }
+
+        document.getElementById('runBtn').onclick = async () => {
+            const url = document.getElementById('url').value;
+            const keywords = document.getElementById('keywords').value;
+            const competitor = document.getElementById('competitor').value;
+            if (!url) { alert('Укажите URL'); return; }
+            const btn = document.getElementById('runBtn');
+            const spinner = document.getElementById('spinner');
+            btn.disabled = true;
+            spinner.classList.add('active');
+            try {
+                const res = await fetch('/api/audit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url, keywords, competitor: competitor || undefined})
+                });
+                if (!res.ok) throw new Error('audit failed');
+                const data = await res.json();
+                lastId = data.id;
+                render(data.result, data.competitor);
+                loadHistory();
+            } catch (e) {
+                alert('Ошибка: ' + e);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.remove('active');
+            }
+        };
+
+        document.getElementById('exportMd').onclick = async () => {
+            if (!lastId) { alert('Нет ID аудита'); return; }
+            window.open(`/api/audits/${lastId}/export.md`, '_blank');
+        };
+
+        document.getElementById('exportJson').onclick = () => {
+            if (!currentAudit) return;
+            const blob = new Blob([JSON.stringify(currentAudit, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'audit.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        loadHistory();
+    </script>
+</body>
+</html>
