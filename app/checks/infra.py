@@ -851,6 +851,44 @@ async def reverse_dns(ctx: AuditContext) -> CheckResult:
 # --------------------------------------------------------------------------- #
 # Проверка 4: RDAP (аналог whois)
 # --------------------------------------------------------------------------- #
+TCINET_TLDS = ("ru", "su", "xn--p1ai")  # .ru/.su/.рф — RDAP не поддерживается, только WHOIS на порту 43
+
+
+def parse_tcinet_whois(text: str) -> Dict[str, Any]:
+    """Преобразовать ответ whois.tcinet.ru в RDAP-подобный словарь для parse_rdap."""
+    fields: Dict[str, List[str]] = {}
+    for line in (text or "").splitlines():
+        if ":" not in line or line.startswith("%"):
+            continue
+        key, _, value = line.partition(":")
+        fields.setdefault(key.strip().lower(), []).append(value.strip())
+    if "domain" not in fields:
+        return {}
+    events = []
+    for key, action in (("created", "registration"), ("paid-till", "expiration")):
+        if fields.get(key):
+            events.append({"eventAction": action, "eventDate": fields[key][0]})
+    data: Dict[str, Any] = {
+        "events": events,
+        "nameservers": [{"ldhName": ns.split()[0].rstrip(".")} for ns in fields.get("nserver", [])],
+    }
+    if fields.get("registrar"):
+        data["entities"] = [{"roles": ["registrar"], "handle": fields["registrar"][0]}]
+    return data
+
+
+async def _tcinet_whois(domain: str) -> Dict[str, Any] | None:
+    try:
+        reader, writer = await asyncio.wait_for(asyncio.open_connection("whois.tcinet.ru", 43), timeout=10)
+        writer.write(domain.encode("idna") + b"\r\n")
+        await writer.drain()
+        raw = await asyncio.wait_for(reader.read(), timeout=10)
+        writer.close()
+    except Exception:
+        return None
+    return parse_tcinet_whois(raw.decode("utf-8", errors="replace")) or None
+
+
 @check(id="whois_rdap", title="Данные регистратора домена (RDAP)", category=CATEGORY)
 async def whois_rdap(ctx: AuditContext) -> CheckResult:
     check_id = "whois_rdap"
@@ -868,6 +906,11 @@ async def whois_rdap(ctx: AuditContext) -> CheckResult:
             findings=[Finding(level="info", text="Не удалось определить домен для RDAP-запроса", fix="", hours=0.0)],
             raw={"domain": domain, "url": url},
         )
+
+    if domain and domain.rsplit(".", 1)[-1].lower() in TCINET_TLDS:
+        whois_data = await _tcinet_whois(domain)
+        if whois_data:
+            return _rdap_result(check_id, title, domain, "whois.tcinet.ru", whois_data)
 
     resp = await ctx.get(url, timeout=20.0)
     if resp is None:
@@ -910,7 +953,10 @@ async def whois_rdap(ctx: AuditContext) -> CheckResult:
         data = resp.json()
     except Exception:
         data = None
+    return _rdap_result(check_id, title, domain, url, data)
 
+
+def _rdap_result(check_id: str, title: str, domain: str, url: str, data: Any) -> CheckResult:
     info = parse_rdap(data)
     findings: List[Finding] = []
     status = "ok"
@@ -979,7 +1025,7 @@ async def whois_rdap(ctx: AuditContext) -> CheckResult:
         status=status,
         score=score,
         findings=findings,
-        raw={"domain": domain, "url": url, "status": resp.status_code, **info},
+        raw={"domain": domain, "source": url, **info},
     )
 
 

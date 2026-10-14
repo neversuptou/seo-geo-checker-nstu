@@ -300,3 +300,22 @@ def test_split_passages():
 def test_split_passages_empty():
     parsed = split_passages("")
     assert parsed["passages"] == []
+
+
+def test_parse_tcinet_whois_maps_to_rdap_shape():
+    from app.checks.infra import parse_rdap, parse_tcinet_whois
+
+    text = (
+        "% TCI Whois Service.\n"
+        "domain:        EVAPPS.RU\n"
+        "nserver:       ns1.reg.ru.\n"
+        "registrar:     REGRU-RU\n"
+        "created:       2015-03-12T21:00:00Z\n"
+        "paid-till:     2027-03-13T21:00:00Z\n"
+    )
+    info = parse_rdap(parse_tcinet_whois(text))
+    assert info["registrar"] == "REGRU-RU"
+    assert info["registration"].startswith("2015-03-12")
+    assert info["expiration"].startswith("2027-03-13")
+    assert info["nameservers"] == ["ns1.reg.ru"]
+    assert parse_tcinet_whois("% nothing here") == {}
