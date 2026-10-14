@@ -114,3 +114,12 @@ def test_report_pdf_endpoint():
     disposition = resp.headers["content-disposition"]
     assert "attachment" in disposition
     assert "seo-geo-audit-example.com-" in disposition
+
+
+def test_service_is_closed_from_indexing():
+    resp = client.get("/robots.txt")
+    assert resp.text.strip().endswith("Disallow: /")
+    assert "noindex" in resp.headers["x-robots-tag"]
+    page = client.get("/")
+    assert "noindex" in page.headers["x-robots-tag"]
+    assert '<meta name="robots" content="noindex' in page.text

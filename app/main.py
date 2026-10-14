@@ -38,6 +38,21 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="SEO/GEO Audit Service", version="0.1.0", lifespan=lifespan)
+
+NOINDEX = "noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai"
+
+
+@app.middleware("http")
+async def noindex_header(request: Request, call_next):
+    # Внутренний сервис: закрыт от поисковиков и ИИ-краулеров на всех ответах, включая PDF и API
+    response = await call_next(request)
+    response.headers["X-Robots-Tag"] = NOINDEX
+    return response
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+async def robots_txt() -> str:
+    return "User-agent: *\nDisallow: /\n"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
