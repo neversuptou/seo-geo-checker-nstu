@@ -42,6 +42,11 @@ class CheckResult:
         }
 
 
+def _bare_host(host: str) -> str:
+    host = (host or "").lower()
+    return host[4:] if host.startswith("www.") else host
+
+
 class ThrottledTransport(httpx.AsyncBaseTransport):
     """Ограничивает параллельные запросы и повторяет запрос при сетевом сбое/429/503.
 
@@ -51,14 +56,38 @@ class ThrottledTransport(httpx.AsyncBaseTransport):
 
     RETRY_STATUSES = {429, 503}
 
-    def __init__(self, inner: httpx.AsyncBaseTransport | None = None, limit: int = 6, retries: int = 2) -> None:
+    def __init__(
+        self,
+        inner: httpx.AsyncBaseTransport | None = None,
+        limit: int = 6,
+        retries: int = 2,
+        paced_host: str | None = None,
+        min_interval: float = 0.0,
+    ) -> None:
         self._inner = inner or httpx.AsyncHTTPTransport()
         self._sem = asyncio.Semaphore(limit)
         self._retries = retries
+        # Бережный режим: запросы к проверяемому сайту идут строго по одному с паузой,
+        # чтобы не сработала антибот-защита (Imunify360, Cloudflare). Внешние сервисы не тормозим.
+        self._paced_host = _bare_host(paced_host) if paced_host else None
+        self._min_interval = min_interval
+        self._pace_lock = asyncio.Lock()
+        self._last_request = 0.0
+
+    async def _pace(self, request: httpx.Request) -> None:
+        if not self._paced_host or _bare_host(request.url.host) != self._paced_host:
+            return
+        async with self._pace_lock:
+            loop = asyncio.get_running_loop()
+            wait = self._last_request + self._min_interval - loop.time()
+            if wait > 0:
+                await asyncio.sleep(wait)
+            self._last_request = loop.time()
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         for attempt in range(self._retries + 1):
             last = attempt == self._retries
+            await self._pace(request)
             async with self._sem:
                 try:
                     resp = await self._inner.handle_async_request(request)
@@ -78,7 +107,14 @@ class ThrottledTransport(httpx.AsyncBaseTransport):
 
 
 class AuditContext:
-    def __init__(self, url: str, keywords: List[str] | None = None, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(
+        self,
+        url: str,
+        keywords: List[str] | None = None,
+        client: httpx.AsyncClient | None = None,
+        gentle: bool = False,
+    ) -> None:
+        self.gentle = gentle
         self.keywords = keywords or []
         self._cache: Dict[str, httpx.Response] = {}
         self._lock = asyncio.Lock()

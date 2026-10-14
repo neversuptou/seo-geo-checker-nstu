@@ -5,8 +5,11 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Awaitable
 
 import httpx
+from urllib.parse import urlparse
 
 from app.core import AuditContext, CheckResult, Finding, BROWSER_UA, ThrottledTransport
+
+GENTLE_INTERVAL = 0.8  # секунд между запросами к проверяемому сайту в бережном режиме
 
 CHALLENGE_MARKERS = (
     "one moment, please",      # Imunify360 / LiteSpeed
@@ -69,6 +72,7 @@ async def run_audit(
     keywords: List[str] | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
     only: list[str] | None = None,
+    gentle: bool = True,
 ) -> Dict[str, Any]:
     # Выбор проверок: непустой `only` — запускаем только указанные id
     if only:
@@ -83,11 +87,16 @@ async def run_audit(
         headers={"User-Agent": BROWSER_UA},
         http2=False,
         verify=True,
-        transport=ThrottledTransport(transport),
+        transport=ThrottledTransport(
+            transport,
+            limit=2 if gentle else 6,
+            paced_host=urlparse(url if "://" in url else "https://" + url).hostname if gentle else None,
+            min_interval=GENTLE_INTERVAL,
+        ),
         timeout=20.0,
     )
 
-    ctx = AuditContext(url=url, keywords=keywords, client=client)
+    ctx = AuditContext(url=url, keywords=keywords, client=client, gentle=gentle)
 
     # Антибот-заглушка делает все остальные проверки недостоверными — останавливаемся
     home = await ctx.home()

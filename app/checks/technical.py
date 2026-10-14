@@ -41,6 +41,7 @@ CATEGORY = "Технический SEO"
 # Ограничения сетевых проверок.
 SITEMAP_MAX_CHILDREN = 50
 SITEMAP_SAMPLE_SIZE = 30
+SITEMAP_SAMPLE_SIZE_GENTLE = 12
 HREFLANG_SAMPLE_SIZE = 5
 MAX_REDIRECT_HOPS = 5
 HSTS_MIN_MAX_AGE = 15552000  # 180 дней
@@ -885,7 +886,7 @@ async def sitemap(ctx: AuditContext) -> CheckResult:
     with_lastmod = sum(1 for value in url_lastmod.values() if value)
 
     # 4. Выборка до SITEMAP_SAMPLE_SIZE URL и параллельная загрузка (Semaphore(6)).
-    sample_size = min(SITEMAP_SAMPLE_SIZE, total_urls)
+    sample_size = min(SITEMAP_SAMPLE_SIZE_GENTLE if ctx.gentle else SITEMAP_SAMPLE_SIZE, total_urls)
     sampled = random.sample(all_urls, sample_size) if total_urls else []
     sem = asyncio.Semaphore(6)
 

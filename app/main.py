@@ -73,13 +73,14 @@ async def api_audit(payload: Dict[str, Any]) -> JSONResponse:
         only_checks = []
 
     # Run main audit
-    result = await run_audit(url=url, keywords=keywords, only=only_checks or None)
+    gentle = bool(payload.get("gentle", True))
+    result = await run_audit(url=url, keywords=keywords, only=only_checks or None, gentle=gentle)
 
     # Run competitor if provided
     competitor_result = None
     if competitor:
         try:
-            competitor_result = await run_audit(url=competitor, keywords=keywords, only=only_checks or None)
+            competitor_result = await run_audit(url=competitor, keywords=keywords, only=only_checks or None, gentle=gentle)
         except Exception as e:
             competitor_result = {"error": str(e)}
 

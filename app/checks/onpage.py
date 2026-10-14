@@ -33,6 +33,7 @@ W3C_ENDPOINT = "https://validator.w3.org/nu/?out=json"
 
 # Лимиты проверок ссылок.
 LINKS_LIMIT = 50
+LINKS_LIMIT_GENTLE = 15
 LINKS_CONCURRENCY = 8
 
 # Минимальная и максимальная длина title / description.
@@ -1027,7 +1028,7 @@ async def links(ctx: AuditContext) -> CheckResult:
             )
         )
 
-    urls = data["unique_urls"][:LINKS_LIMIT]
+    urls = data["unique_urls"][: LINKS_LIMIT_GENTLE if ctx.gentle else LINKS_LIMIT]
     broken: List[Dict[str, Any]] = []
     checked = len(urls) if ctx.client is not None else 0
 

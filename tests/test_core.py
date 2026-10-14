@@ -62,3 +62,22 @@ async def test_run_audit_stops_on_antibot_challenge():
     result = await run_audit("example.com", transport=transport)
     assert result["blocked"] is True
     assert [c["id"] for c in result["checks"]] == ["anti_bot_challenge"]
+
+
+@pytest.mark.asyncio
+async def test_gentle_transport_paces_requests_to_audited_host():
+    import asyncio
+    from app.core import ThrottledTransport
+
+    times = []
+
+    def handler(request):
+        times.append(asyncio.get_running_loop().time())
+        return httpx.Response(200, text="ok")
+
+    transport = ThrottledTransport(httpx.MockTransport(handler), limit=2, paced_host="example.com", min_interval=0.2)
+    async with httpx.AsyncClient(transport=transport) as client:
+        await asyncio.gather(*[client.get(f"https://www.example.com/{i}") for i in range(3)])
+        await client.get("https://other.org/")  # чужой хост не тормозим
+    gaps = [b - a for a, b in zip(times, times[1:3])]
+    assert all(g >= 0.18 for g in gaps)
