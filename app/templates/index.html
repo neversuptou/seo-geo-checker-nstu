@@ -525,6 +525,10 @@
 
     /* ===== Footer ===== */
     .site-footer { border-top: 1px solid var(--line); padding: 24px 0 40px; color: var(--muted); font-size: 13px; }
+    /* Длинные URL в находках не должны растягивать карточки на мобильных */
+    .fix-card, .ok-card, .finding, .findings, .fix-top, .results-head, td { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+    .fix-card, .ok-card { max-width: 100%; }
+    html, body { overflow-x: hidden; }
 </style>
 </head>
 <body>
