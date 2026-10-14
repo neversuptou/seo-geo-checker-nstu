@@ -1321,6 +1321,10 @@
     updateCount();
     loadHistory();
     void escapeHtml;
+
+    // Ссылки из MCP-коннектора вида /?audit=<id> сразу открывают нужный аудит
+    var auditParam = new URLSearchParams(window.location.search).get('audit');
+    if (auditParam && /^\d+$/.test(auditParam)) loadAudit(auditParam);
 })();
 </script>
 </body>

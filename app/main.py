@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +21,23 @@ from app import storage
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
-app = FastAPI(title="SEO/GEO Audit Service", version="0.1.0")
+log = logging.getLogger(__name__)
+
+MCP_TOKEN = os.environ.get("MCP_TOKEN", "").strip()
+
+
+@contextlib.asynccontextmanager
+async def lifespan(_: FastAPI):
+    if MCP_TOKEN:
+        from app.mcp_server import mcp  # noqa: PLC0415
+
+        async with mcp.session_manager.run():
+            yield
+    else:
+        yield
+
+
+app = FastAPI(title="SEO/GEO Audit Service", version="0.1.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
@@ -113,8 +131,10 @@ async def api_audit_export_md(id: int) -> PlainTextResponse:
     data = storage.get_audit(id)
     if not data:
         raise HTTPException(status_code=404, detail="not found")
-    result = data.get("result", {})
+    return PlainTextResponse(build_markdown(data.get("result", {})), media_type="text/markdown; charset=utf-8")
 
+
+def build_markdown(result: dict) -> str:
     lines: List[str] = []
     lines.append(f"# Аудит {result.get('url')}")
     lines.append(f"Общий балл: {result.get('overall_score')}/100")
@@ -156,7 +176,7 @@ async def api_audit_export_md(id: int) -> PlainTextResponse:
     lines.append(f"| **Итого** | | | **{plan.get('total_hours')}** |")
     lines.append("")
 
-    return PlainTextResponse("\n".join(lines), media_type="text/markdown; charset=utf-8")
+    return "\n".join(lines)
 
 
 def render_report_html(result: dict) -> str:
@@ -233,6 +253,14 @@ def render_report_html(result: dict) -> str:
     )
 
 
+def build_pdf(result: dict) -> bytes:
+    """Клиентский PDF. Бросает ImportError/OSError, если WeasyPrint или Pango недоступны."""
+    # Ленивый импорт: WeasyPrint тянет нативные зависимости (Pango) и может отсутствовать
+    from weasyprint import HTML  # noqa: PLC0415
+
+    return HTML(string=render_report_html(result), base_url=str(STATIC_DIR)).write_pdf()
+
+
 @app.get("/api/audits/{id}/report.pdf")
 async def api_audit_report_pdf(id: int) -> Response:
     data = storage.get_audit(id)
@@ -240,12 +268,8 @@ async def api_audit_report_pdf(id: int) -> Response:
         raise HTTPException(status_code=404, detail="not found")
     result = data.get("result", {})
 
-    html = render_report_html(result)
     try:
-        # Ленивый импорт: WeasyPrint тянет нативные зависимости (Pango) и может отсутствовать
-        from weasyprint import HTML  # noqa: PLC0415
-
-        pdf_bytes = HTML(string=html, base_url=str(STATIC_DIR)).write_pdf()
+        pdf_bytes = build_pdf(result)
     except (ImportError, OSError) as e:
         raise HTTPException(
             status_code=503,
@@ -259,3 +283,12 @@ async def api_audit_report_pdf(id: int) -> Response:
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# MCP-коннектор: путь с секретным токеном, без токена коннектор выключен
+if MCP_TOKEN:
+    from app.mcp_server import mcp  # noqa: E402
+
+    app.mount(f"/mcp/{MCP_TOKEN}", mcp.streamable_http_app())
+else:
+    log.warning("MCP_TOKEN не задан — MCP-коннектор отключён")

@@ -6,4 +6,4 @@ dnspython
 jinja2
 weasyprint
 pytest
-pytest-asyncio
+pytest-asynciomcp>=1.28

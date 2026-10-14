@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     ports:
       - "8077:8000"
+    environment:
+      - PUBLIC_BASE_URL=https://check-seo-geo.evapps.ru
     volumes:
       - ./data:/app/data
     env_file:

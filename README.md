@@ -75,3 +75,25 @@ python -m pytest -q
 - Сохранение результатов аудита в SQLite (`data/audits.db`)
 - Экспорт отчёта в Markdown
 - Адаптивный UI с поддержкой светлой/тёмной темы
+
+
+## MCP-коннектор
+
+Сервис доступен как удалённый MCP-сервер (Streamable HTTP), чтобы запускать аудиты и получать отчёты прямо из Claude.
+
+- Эндпоинт: `https://check-seo-geo.evapps.ru/mcp/<MCP_TOKEN>/` (токен задаётся в `.env` на сервере, без него коннектор выключен).
+- claude.ai: Settings → Connectors → Add custom connector → вставить URL.
+- Claude Code: `claude mcp add --transport http seo-geo https://check-seo-geo.evapps.ru/mcp/<MCP_TOKEN>/`
+
+Инструменты:
+
+| Инструмент | Что делает |
+|---|---|
+| `list_checks` | Список проверок и категорий |
+| `run_audit` | Аудит сайта: все проверки или выбранные (`checks`, `categories`), бережный режим, ключевые слова. Возвращает проблемы по приоритету и ссылки на веб, PDF и Markdown |
+| `get_audit` | Сохранённый аудит по id |
+| `list_audits` | История, фильтр по URL |
+| `get_report` | PDF для клиента (ссылка + base64) или Markdown |
+| `compare_sites` | Сравнение с конкурентом |
+
+Примеры запросов к Claude: «Проверь pandeoshop.com и пришли PDF для клиента», «Прогони только GEO / AI проверки для evapps.ru», «Сравни наш сайт с конкурентом».
