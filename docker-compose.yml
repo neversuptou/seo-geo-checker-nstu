@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    container_name: seo-geo-checker
+    restart: unless-stopped
+    ports:
+      - "8077:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - path: .env
+        required: false
