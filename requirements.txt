@@ -7,4 +7,4 @@ jinja2
 weasyprint
 pytest
 pytest-asyncio
-mcp>=1.28
+mcp==1.28.1
