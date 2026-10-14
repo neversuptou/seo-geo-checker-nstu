@@ -1,3 +1,7 @@
 .pytest_cache/
 __pycache__/
 data/
+.claude-flow/
+.claude/
+.swarm/
+*.db
