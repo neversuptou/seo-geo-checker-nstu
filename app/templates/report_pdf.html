@@ -149,7 +149,7 @@ section { margin-bottom: 14pt; }
 }
 .ok-table td { border-bottom: 0.5pt solid #e2e2e2; padding: 3.5pt 6pt; vertical-align: top; }
 
-/* ===== Не проверено ===== */
+/* ===== skipped (не используется в клиентском PDF) ===== */
 .skipped-list { margin: 0; padding-left: 14pt; font-size: 9.5pt; }
 .skipped-list li { margin-bottom: 3pt; }
 
@@ -204,8 +204,6 @@ section { margin-bottom: 14pt; }
             <table class="counts">
                 <tr><td>Критично</td><td class="num critical">{{ summary.critical }}</td></tr>
                 <tr><td>Требует внимания</td><td class="num warning">{{ summary.warning }}</td></tr>
-                <tr><td>В порядке</td><td class="num ok">{{ summary.ok }}</td></tr>
-                <tr><td>Не проверено</td><td class="num skipped">{{ summary.skipped }}</td></tr>
             </table>
         </td>
     </tr>
@@ -261,36 +259,6 @@ section { margin-bottom: 14pt; }
     {% endif %}
 </section>
 
-{% if ok_items %}
-<section>
-    <h2>Что в порядке</h2>
-    <table class="ok-table">
-        <thead>
-            <tr><th>Проверка</th><th>Категория</th><th>Результат</th></tr>
-        </thead>
-        <tbody>
-            {% for item in ok_items %}
-            <tr>
-                <td>{{ item.title }}</td>
-                <td>{{ item.category }}</td>
-                <td>{{ item.text }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
-{% endif %}
-
-{% if skipped_items %}
-<section>
-    <h2>Не проверено</h2>
-    <ul class="skipped-list">
-        {% for item in skipped_items %}
-        <li><strong>{{ item.title }}</strong> ({{ item.category }}) — {{ item.reason }}</li>
-        {% endfor %}
-    </ul>
-</section>
-{% endif %}
 
 {% endif %}
 

@@ -83,8 +83,8 @@ def _fake_result() -> dict:
 def test_render_report_html():
     html = render_report_html(_fake_result())
     assert "Что нужно исправить" in html
-    assert "Что в порядке" in html
-    assert "Не проверено" in html
+    assert "Что в порядке" not in html
+    assert "Не проверено" not in html
     assert "Часы" not in html
     assert "hours" not in html.lower()
 
