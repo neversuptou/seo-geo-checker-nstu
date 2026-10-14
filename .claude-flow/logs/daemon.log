@@ -1,0 +1,14 @@
+[2026-10-14T13:42:52.233Z] [INFO] AI workers disabled (default) - all workers run local-only. Enable with `daemon start --headless`, daemon.aiWorkers.enabled=true, or RUFLO_DAEMON_AI_WORKERS=1 (#2661)
+[2026-10-14T13:42:52.235Z] [INFO] Scheduled map (interval: 900s, first run in 0s)
+[2026-10-14T13:42:52.236Z] [INFO] Scheduled audit (interval: 600s, first run in 120s)
+[2026-10-14T13:42:52.236Z] [INFO] Scheduled optimize (interval: 900s, first run in 240s)
+[2026-10-14T13:42:52.236Z] [INFO] Scheduled consolidate (interval: 1800s, first run in 360s)
+[2026-10-14T13:42:52.237Z] [INFO] Scheduled testgaps (interval: 1200s, first run in 480s)
+[2026-10-14T13:42:52.237Z] [INFO] Scheduled backup (interval: 86400s, first run in 600s)
+[2026-10-14T13:42:52.237Z] [INFO] Scheduled harness (interval: 21600s, first run in 720s)
+[2026-10-14T13:42:52.238Z] [INFO] Lifecycle monitor active (workspace-removal, ttl=43200s)
+[2026-10-14T13:42:52.241Z] [INFO] Daemon started (PID: 20920, CPUs: 8, workers: 7, maxCpuLoad: 6.4, minFreeMemoryPercent: 10%)
+[2026-10-14T13:42:52.244Z] [INFO] Starting worker: map (1/2 concurrent)
+[2026-10-14T13:42:52.246Z] [INFO] Worker map completed in 4ms
+[2026-10-14T13:44:52.236Z] [INFO] Starting worker: audit (1/2 concurrent)
+[2026-10-14T13:44:52.237Z] [INFO] Worker audit completed in 2ms

@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Awaitable
 
 import httpx
 
-from app.core import AuditContext, CheckResult, Finding, BROWSER_UA
+from app.core import AuditContext, CheckResult, Finding, BROWSER_UA, ThrottledTransport
 
 CHECKS: List[Callable[[AuditContext], Awaitable[CheckResult]]] = []
 
@@ -33,7 +33,8 @@ async def run_audit(
         headers={"User-Agent": BROWSER_UA},
         http2=False,
         verify=True,
-        transport=transport,
+        transport=ThrottledTransport(transport),
+        timeout=20.0,
     )
 
     ctx = AuditContext(url=url, keywords=keywords, client=client)

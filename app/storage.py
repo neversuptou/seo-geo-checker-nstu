@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 
 def _get_db_path() -> Path:
-    db_dir = Path("data")
+    db_dir = Path(__file__).resolve().parent.parent / "data"
     db_dir.mkdir(parents=True, exist_ok=True)
     return db_dir / "audits.db"
 

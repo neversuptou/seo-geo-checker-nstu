@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "seo-geo-checker", "runtimeExecutable": "python", "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--port", "8077"], "port": 8077 }
+  ]
+}

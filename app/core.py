@@ -42,6 +42,41 @@ class CheckResult:
         }
 
 
+class ThrottledTransport(httpx.AsyncBaseTransport):
+    """Ограничивает параллельные запросы и повторяет запрос при сетевом сбое/429/503.
+
+    Сайты на shared-хостинге начинают рвать соединения, если проверки бьют
+    в них десятками параллельных запросов — без этого получаются ложные «битые ссылки».
+    """
+
+    RETRY_STATUSES = {429, 503}
+
+    def __init__(self, inner: httpx.AsyncBaseTransport | None = None, limit: int = 6, retries: int = 2) -> None:
+        self._inner = inner or httpx.AsyncHTTPTransport()
+        self._sem = asyncio.Semaphore(limit)
+        self._retries = retries
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        for attempt in range(self._retries + 1):
+            last = attempt == self._retries
+            async with self._sem:
+                try:
+                    resp = await self._inner.handle_async_request(request)
+                except (httpx.TransportError,) :
+                    if last:
+                        raise
+                    resp = None
+            if resp is not None and (resp.status_code not in self.RETRY_STATUSES or last):
+                return resp
+            if resp is not None:
+                await resp.aclose()
+            await asyncio.sleep(1.5 * (attempt + 1))
+        raise httpx.ConnectError("retries exhausted", request=request)
+
+    async def aclose(self) -> None:
+        await self._inner.aclose()
+
+
 class AuditContext:
     def __init__(self, url: str, keywords: List[str] | None = None, client: httpx.AsyncClient | None = None) -> None:
         self.keywords = keywords or []

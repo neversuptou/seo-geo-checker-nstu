@@ -300,3 +300,10 @@ def test_validate_server_card():
     assert any("'version'" in p for p in problems)
     assert any("'endpoints'" in p for p in problems)
     assert any("'endpoints' должно" in p for p in validate_server_card({"endpoints": "x"}))
+
+
+def test_max_snippet_unlimited_is_not_restrictive():
+    from app.checks.geo_files import parse_meta_directives
+    html = "<meta name='robots' content='index, follow, max-snippet:-1' />"
+    assert "max-snippet" not in parse_meta_directives(html)["found"]
+    assert "max-snippet" in parse_meta_directives("<meta name='robots' content='max-snippet:0'>")["found"]

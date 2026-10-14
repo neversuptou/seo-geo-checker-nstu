@@ -383,6 +383,11 @@ def parse_meta_directives(html: str, x_robots_tag: str = "") -> Dict[str, Any]:
 
     haystack = " ".join(v for _, v in parts).lower()
     found = [d for d in AI_META_DIRECTIVES if d in haystack]
+    # max-snippet:-1 означает «без ограничений», ограничением считаем только 0..49
+    if "max-snippet" in found:
+        values = [int(v) for v in re.findall(r"max-snippet\s*:\s*(-?\d+)", haystack)]
+        if values and all(v < 0 or v >= 50 for v in values):
+            found.remove("max-snippet")
 
     sources: Dict[str, List[str]] = {}
     for directive in found:
