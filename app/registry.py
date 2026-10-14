@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Awaitable
 
 import httpx
@@ -43,11 +44,40 @@ def check(id: str, title: str, category: str):
     return decorator
 
 
+def list_checks() -> list[dict]:
+    """Все зарегистрированные проверки в порядке регистрации."""
+    return [dict(fn._check_meta) for fn in CHECKS if hasattr(fn, "_check_meta")]
+
+
+def _summarize(results: List[CheckResult]) -> Dict[str, int]:
+    """Сводка по статусам: error считается как skipped."""
+    summary = {"critical": 0, "warning": 0, "ok": 0, "skipped": 0}
+    for r in results:
+        if r.status == "critical":
+            summary["critical"] += 1
+        elif r.status == "warning":
+            summary["warning"] += 1
+        elif r.status == "ok":
+            summary["ok"] += 1
+        else:  # skipped / error
+            summary["skipped"] += 1
+    return summary
+
+
 async def run_audit(
     url: str,
     keywords: List[str] | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
+    only: list[str] | None = None,
 ) -> Dict[str, Any]:
+    # Выбор проверок: непустой `only` — запускаем только указанные id
+    if only:
+        only_set = set(only)
+        selected = [fn for fn in CHECKS if getattr(fn, "_check_meta", {}).get("id") in only_set]
+    else:
+        selected = list(CHECKS)
+    selected_ids = [getattr(fn, "_check_meta", {}).get("id", "unknown") for fn in selected]
+
     # Create client
     client = httpx.AsyncClient(
         headers={"User-Agent": BROWSER_UA},
@@ -78,6 +108,9 @@ async def run_audit(
         return {
             "url": ctx.url, "base": ctx.base, "host": ctx.host, "overall_score": 0, "blocked": True,
             "checks": [blocked.to_dict()],
+            "selected": ["anti_bot_challenge"],
+            "created_at": datetime.now().isoformat(timespec="seconds"),
+            "summary": _summarize([blocked]),
             "plan": {"findings": [{"check_id": blocked.id, "check_title": blocked.title, "level": "critical",
                                    "text": finding.text, "fix": finding.fix, "hours": finding.hours}],
                      "total_hours": finding.hours},
@@ -101,7 +134,7 @@ async def run_audit(
                     raw={"error": str(e)},
                 )
 
-    results = await asyncio.gather(*[run_one(fn) for fn in CHECKS])
+    results = await asyncio.gather(*[run_one(fn) for fn in selected])
 
     await client.aclose()
 
@@ -144,6 +177,9 @@ async def run_audit(
         "host": ctx.host,
         "overall_score": overall_score,
         "checks": [r.to_dict() for r in results],
+        "selected": selected_ids,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "summary": _summarize(results),
         "plan": {
             "findings": plan_findings,
             "total_hours": total_hours,

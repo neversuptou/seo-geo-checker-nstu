@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>SEO/GEO аудит — {{ result.host or result.url }}</title>
+<style>
+@font-face {
+    font-family: "Oswald";
+    src: url(fonts/Oswald-Medium.woff2) format("woff2");
+    font-weight: 500;
+}
+@font-face {
+    font-family: "Roboto";
+    src: url(fonts/Roboto.woff2) format("woff2");
+    font-weight: 400;
+}
+@font-face {
+    font-family: "Roboto Medium";
+    src: url(fonts/Robotomedium.woff2) format("woff2");
+    font-weight: 500;
+}
+
+@page {
+    size: A4;
+    margin: 16mm;
+    @bottom-right {
+        content: counter(page) " / " counter(pages);
+        font-family: "Roboto", sans-serif;
+        font-size: 9pt;
+        color: #888;
+    }
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Roboto", "DejaVu Sans", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    color: #111;
+    background: #ffffff;
+}
+
+h1, h2, h3 {
+    font-family: "Oswald", "DejaVu Sans", sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #111;
+    margin: 0 0 8pt;
+    break-after: avoid;
+    page-break-after: avoid;
+}
+h2 { font-size: 16pt; border-bottom: 2pt solid #80d207; padding-bottom: 4pt; }
+h3 { font-size: 12pt; margin-top: 12pt; }
+
+/* ===== Обложка ===== */
+.cover {
+    border-bottom: 3pt solid #80d207;
+    padding-bottom: 10pt;
+    margin-bottom: 12pt;
+}
+.brand {
+    font-family: "Oswald", "DejaVu Sans", sans-serif;
+    text-transform: uppercase;
+    font-size: 11pt;
+    letter-spacing: 0.14em;
+    color: #80d207;
+}
+.cover h1 { font-size: 23pt; margin: 6pt 0 4pt; }
+.cover .site-url {
+    font-family: "Roboto Medium", sans-serif;
+    font-size: 13pt;
+    color: #111;
+    margin-bottom: 2pt;
+}
+.cover .report-date { font-size: 9.5pt; color: #555; }
+
+/* ===== Балл и сводка ===== */
+.summary-table { width: 100%; margin: 10pt 0 14pt; border-collapse: collapse; }
+.summary-table td { vertical-align: middle; padding: 4pt; }
+.score-cell { width: 30%; text-align: center; border: 2pt solid #80d207; padding: 10pt 4pt; }
+.score-value {
+    font-family: "Oswald", sans-serif;
+    font-size: 34pt;
+    line-height: 1;
+    color: #111;
+}
+.score-caption { font-size: 9pt; color: #555; text-transform: uppercase; letter-spacing: 0.08em; }
+.counts-cell { width: 70%; }
+.counts { width: 100%; border-collapse: collapse; }
+.counts td { border-bottom: 1pt solid #e2e2e2; padding: 4pt 6pt; font-size: 10pt; }
+.counts .num {
+    font-family: "Roboto Medium", sans-serif;
+    text-align: right;
+    width: 36pt;
+    font-size: 12pt;
+}
+.num.critical { color: #c62828; }
+.num.warning { color: #e07b00; }
+.num.ok { color: #5a9e00; }
+.num.skipped { color: #777; }
+
+section { margin-bottom: 14pt; }
+
+/* ===== Пункты отчёта ===== */
+.prio.critical { color: #c62828; }
+.prio.warning { color: #e07b00; }
+.prio.info { color: #4a7d00; }
+
+.item {
+    border: 1pt solid #e2e2e2;
+    border-left: 4pt solid #80d207;
+    padding: 7pt 9pt;
+    margin-bottom: 7pt;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.item.critical { border-left-color: #c62828; }
+.item.warning { border-left-color: #e07b00; }
+.item.info { border-left-color: #80d207; }
+.item-head { margin-bottom: 1pt; }
+.item-title { font-family: "Roboto Medium", sans-serif; font-size: 11pt; color: #111; }
+.badge {
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.06em;
+    padding: 1pt 6pt;
+    margin-left: 6pt;
+    color: #ffffff;
+}
+.badge.critical { background: #c62828; }
+.badge.warning { background: #e07b00; }
+.badge.info { background: #80d207; }
+.item-cat { font-size: 8.5pt; color: #777; margin-bottom: 4pt; }
+.item-text { margin: 2pt 0; }
+.item-text strong { font-family: "Roboto Medium", sans-serif; }
+
+/* ===== Таблица «в порядке» ===== */
+.ok-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.ok-table th {
+    text-align: left;
+    font-family: "Roboto Medium", sans-serif;
+    background: #f3f7ea;
+    border-bottom: 1.5pt solid #80d207;
+    padding: 4pt 6pt;
+    color: #111;
+}
+.ok-table td { border-bottom: 0.5pt solid #e2e2e2; padding: 3.5pt 6pt; vertical-align: top; }
+
+/* ===== Не проверено ===== */
+.skipped-list { margin: 0; padding-left: 14pt; font-size: 9.5pt; }
+.skipped-list li { margin-bottom: 3pt; }
+
+.blocked-box {
+    border: 2pt solid #c62828;
+    padding: 10pt 12pt;
+    margin-top: 10pt;
+}
+.blocked-title {
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    font-size: 14pt;
+    color: #c62828;
+    margin-bottom: 6pt;
+}
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <div class="brand">EVAPPS · SEO/GEO АУДИТ</div>
+    <h1>Отчёт по аудиту</h1>
+    <div class="site-url">{{ result.url }}</div>
+    <div class="report-date">Дата: {{ report_date }}</div>
+</div>
+
+{% if result.blocked %}
+<div class="blocked-box">
+    <div class="blocked-title">Аудит остановлен</div>
+    {% for c in result.checks %}
+        {% for f in c.findings %}
+        <div class="item critical">
+            <div class="item-head">
+                <span class="item-title">{{ c.title }}</span><span class="badge critical">Критично</span>
+            </div>
+            <div class="item-cat">{{ c.category }}</div>
+            <p class="item-text"><strong>Проблема:</strong> {{ f.text }}</p>
+            {% if f.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ f.fix }}</p>{% endif %}
+        </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% else %}
+
+<table class="summary-table" cellspacing="0" cellpadding="0">
+    <tr>
+        <td class="score-cell">
+            <div class="score-value">{{ result.overall_score }}</div>
+            <div class="score-caption">Общий балл</div>
+        </td>
+        <td class="counts-cell">
+            <table class="counts">
+                <tr><td>Критично</td><td class="num critical">{{ summary.critical }}</td></tr>
+                <tr><td>Требует внимания</td><td class="num warning">{{ summary.warning }}</td></tr>
+                <tr><td>В порядке</td><td class="num ok">{{ summary.ok }}</td></tr>
+                <tr><td>Не проверено</td><td class="num skipped">{{ summary.skipped }}</td></tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<section>
+    <h2>Что нужно исправить</h2>
+
+    {% if critical_items %}
+    <h3 class="prio critical">Критично</h3>
+    {% for item in critical_items %}
+    <div class="item critical">
+        <div class="item-head">
+            <span class="item-title">{{ item.title }}</span><span class="badge critical">Критично</span>
+        </div>
+        <div class="item-cat">{{ item.category }}</div>
+        <p class="item-text"><strong>Проблема:</strong> {{ item.text }}</p>
+        {% if item.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ item.fix }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if warning_items %}
+    <h3 class="prio warning">Требует внимания</h3>
+    {% for item in warning_items %}
+    <div class="item warning">
+        <div class="item-head">
+            <span class="item-title">{{ item.title }}</span><span class="badge warning">Внимание</span>
+        </div>
+        <div class="item-cat">{{ item.category }}</div>
+        <p class="item-text"><strong>Проблема:</strong> {{ item.text }}</p>
+        {% if item.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ item.fix }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if info_items %}
+    <h3 class="prio info">Рекомендации</h3>
+    {% for item in info_items %}
+    <div class="item info">
+        <div class="item-head">
+            <span class="item-title">{{ item.title }}</span><span class="badge info">Рекомендация</span>
+        </div>
+        <div class="item-cat">{{ item.category }}</div>
+        <p class="item-text"><strong>Проблема:</strong> {{ item.text }}</p>
+        {% if item.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ item.fix }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if not critical_items and not warning_items and not info_items %}
+    <p>Критических проблем и предупреждений не обнаружено.</p>
+    {% endif %}
+</section>
+
+{% if ok_items %}
+<section>
+    <h2>Что в порядке</h2>
+    <table class="ok-table">
+        <thead>
+            <tr><th>Проверка</th><th>Категория</th><th>Результат</th></tr>
+        </thead>
+        <tbody>
+            {% for item in ok_items %}
+            <tr>
+                <td>{{ item.title }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.text }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+{% if skipped_items %}
+<section>
+    <h2>Не проверено</h2>
+    <ul class="skipped-list">
+        {% for item in skipped_items %}
+        <li><strong>{{ item.title }}</strong> ({{ item.category }}) — {{ item.reason }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{% endif %}
+
+</body>
+</html>

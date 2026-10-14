@@ -4,5 +4,6 @@ httpx
 selectolax
 dnspython
 jinja2
+weasyprint
 pytest
 pytest-asyncio

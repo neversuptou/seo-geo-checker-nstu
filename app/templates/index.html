@@ -1,259 +1,1316 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEO/GEO Аудит</title>
-    <style>
-        :root {
-            --bg: #ffffff;
-            --text: #1a1a1a;
-            --card-bg: #f9f9f9;
-            --border: #e0e0e0;
-            --primary: #2563eb;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --critical: #ef4444;
-            --info: #6b7280;
-        }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #111827;
-                --text: #f9fafb;
-                --card-bg: #1f2937;
-                --border: #374151;
-                --primary: #3b82f6;
-                --success: #34d399;
-                --warning: #fbbf24;
-                --critical: #f87171;
-                --info: #9ca3af;
-            }
-        }
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; }
-        h1 { margin: 0 0 24px 0; font-size: 24px; }
-        .form { display: grid; gap: 12px; background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .form-row { display: grid; grid-template-columns: 1fr; gap: 8px; }
-        @media (min-width: 640px) { .form-row { grid-template-columns: 2fr 1fr 1fr auto; align-items: end; } }
-        label { font-size: 12px; color: var(--info); display: block; margin-bottom: 4px; }
-        input[type=text] { padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); width: 100%; }
-        button { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .spinner { display: none; margin-left: 8px; }
-        .spinner.active { display: inline-block; }
-        .score { font-size: 32px; font-weight: bold; margin: 16px 0; }
-        .cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media (min-width: 768px) { .cards { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } }
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-        .card h3 { margin: 0 0 8px 0; font-size: 16px; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
-        .badge.ok { background: var(--success); color: white; }
-        .badge.warning { background: var(--warning); color: white; }
-        .badge.critical, .badge.error { background: var(--critical); color: white; }
-        .badge.info, .badge.skipped { background: var(--info); color: white; }
-        .finding { font-size: 13px; margin-bottom: 6px; padding: 6px; background: var(--bg); border-radius: 4px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 8px; border: 1px solid var(--border); text-align: left; }
-        th { background: var(--card-bg); }
-        .history { margin-top: 20px; }
-        .history-item { padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 4px; cursor: pointer; background: var(--card-bg); font-size: 13px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>EVAPPS · SEO/GEO — Аудит сайта</title>
+<style>
+    /* ===== Fonts ===== */
+    @font-face { font-family: 'Oswald'; src: url('/static/fonts/Oswald-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Oswald'; src: url('/static/fonts/Oswald-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Roboto'; src: url('/static/fonts/Robotolight.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Roboto'; src: url('/static/fonts/Roboto.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Roboto'; src: url('/static/fonts/Robotomedium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Roboto'; src: url('/static/fonts/Robotobold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+
+    /* ===== Tokens ===== */
+    :root {
+        --bg: #000;
+        --bg-2: #0d0d0d;
+        --card: #141414;
+        --line: rgba(255, 255, 255, .1);
+        --text: #fff;
+        --muted: #b7b7b7;
+        --accent: #80d207;
+        --accent-2: rgb(99, 192, 0);
+        --danger: #ff6060;
+        --warn: #ffb020;
+        --radius: 16px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+        font-size: 16px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+    }
+    @media (min-width: 900px) { body { font-size: 17px; } }
+
+    h1, h2, h3, .h {
+        font-family: 'Oswald', 'Arial Narrow', Impact, sans-serif;
+        font-weight: 500;
+        text-transform: uppercase;
+        line-height: 1.05;
+        letter-spacing: .02em;
+        margin: 0;
+    }
+    a { color: var(--accent); }
+    button { font-family: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 900px) { .container { padding: 0 40px; } }
+
+    .hidden { display: none !important; }
+    .empty-note { color: var(--muted); font-size: 15px; margin: 0; }
+    .muted-note { color: var(--muted); font-weight: 400; font-size: 13px; }
+
+    /* ===== Header ===== */
+    .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        background: rgba(0, 0, 0, .72);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line);
+    }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+    .logo {
+        font-family: 'Oswald', sans-serif;
+        font-weight: 500;
+        font-size: 20px;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .logo .sep { color: var(--accent); margin: 0 .35em; }
+    .logo .geo { color: var(--accent); }
+    .header-nav a { color: var(--muted); text-decoration: none; font-size: 14px; }
+    .header-nav a:hover { color: var(--text); }
+
+    /* ===== Buttons ===== */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 15px 30px;
+        border-radius: 50px;
+        border: 1px solid transparent;
+        font-family: 'Roboto', sans-serif;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.2;
+        cursor: pointer;
+        transition: background .15s ease, border-color .15s ease, color .15s ease, transform .1s ease;
+        white-space: nowrap;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
+    .btn-primary:hover { background: var(--accent-2); color: #000; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: transparent; border-color: var(--line); color: var(--text); }
+    .btn-secondary:hover { border-color: rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .04); }
+    .btn-secondary:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-sm { padding: 10px 20px; font-size: 14px; }
+
+    /* ===== Inputs ===== */
+    .input {
+        width: 100%;
+        min-width: 0;
+        background: var(--bg-2);
+        border: 1px solid var(--line);
+        color: var(--text);
+        font: 400 16px/1.35 'Roboto', sans-serif;
+        padding: 14px 20px;
+        border-radius: 12px;
+        outline: none;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(128, 210, 7, .18); }
+    .input::placeholder { color: #6f6f6f; }
+    .input-url { border-radius: 50px; font-size: 17px; padding: 17px 24px; }
+    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+    /* ===== Hero ===== */
+    .hero { position: relative; padding: 56px 0 8px; text-align: center; }
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(900px, 100%);
+        height: 460px;
+        background: radial-gradient(closest-side, rgba(128, 210, 7, .22), rgba(128, 210, 7, .06) 55%, rgba(128, 210, 7, 0) 100%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero h1 { font-size: clamp(32px, 6.5vw, 64px); }
+    .hero-sub { color: var(--muted); max-width: 660px; margin: 18px auto 0; font-size: 16px; }
+
+    .audit-form {
+        max-width: 880px;
+        margin: 34px auto 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        text-align: left;
+    }
+    .url-row { display: flex; flex-direction: column; gap: 10px; }
+    @media (min-width: 760px) {
+        .url-row { flex-direction: row; align-items: center; }
+        .url-row .input-url { flex: 1; }
+    }
+
+    /* Segmented toggle */
+    .segmented {
+        align-self: center;
+        display: inline-flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+        padding: 4px;
+        max-width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 50px;
+        background: var(--bg-2);
+    }
+    .seg {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font: 500 14px/1 'Roboto', sans-serif;
+        padding: 11px 20px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background .15s ease, color .15s ease;
+        white-space: nowrap;
+    }
+    .seg:hover { color: var(--text); }
+    .seg.active { background: var(--accent); color: #000; font-weight: 700; }
+
+    /* ===== Picker ===== */
+    .picker {
+        border: 1px solid var(--line);
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 18px;
+        text-align: left;
+    }
+    .picker-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .picker-count { color: var(--muted); font-size: 14px; }
+    .picker-count b { color: var(--accent); font-weight: 700; }
+    .cat-group + .cat-group { margin-top: 18px; }
+    .cat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .cat-name {
+        font-family: 'Oswald', sans-serif;
+        text-transform: uppercase;
+        font-size: 14px;
+        letter-spacing: .08em;
+        color: var(--muted);
+    }
+    .cat-actions { display: flex; gap: 12px; }
+    .link-btn {
+        background: none;
+        border: 0;
+        padding: 0;
+        color: var(--accent);
+        font: 500 13px 'Roboto', sans-serif;
+        cursor: pointer;
+    }
+    .link-btn:hover { color: var(--accent-2); text-decoration: underline; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border: 1px solid var(--line);
+        background: var(--bg-2);
+        border-radius: 50px;
+        font-size: 14px;
+        color: var(--muted);
+        cursor: pointer;
+        user-select: none;
+        transition: border-color .15s ease, color .15s ease, background .15s ease;
+    }
+    .chip:hover { border-color: rgba(255, 255, 255, .3); color: var(--text); }
+    .chip input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; cursor: pointer; }
+    .chip.on { border-color: var(--accent); color: var(--text); background: rgba(128, 210, 7, .1); }
+
+    /* ===== Collapsible extra ===== */
+    .extra { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-2); text-align: left; }
+    .extra > summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 15px 18px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        user-select: none;
+    }
+    .extra > summary::-webkit-details-marker { display: none; }
+    .extra > summary::before {
+        content: '+';
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        color: var(--accent);
+        font-size: 15px;
+        line-height: 1;
+    }
+    .extra[open] > summary::before { content: '–'; }
+    .extra-body { padding: 2px 18px 18px; display: grid; gap: 14px; }
+
+    /* ===== Progress ===== */
+    .progress { display: none; }
+    .progress.show { display: block; }
+    .progress-track { height: 6px; background: rgba(255, 255, 255, .08); border-radius: 99px; overflow: hidden; position: relative; }
+    .progress-track i {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 38%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        animation: barSlide 1.3s ease-in-out infinite;
+    }
+    @keyframes barSlide { 0% { left: -40%; } 100% { left: 105%; } }
+    .progress-text { margin-top: 10px; text-align: center; color: var(--muted); font-size: 14px; }
+    .progress-text b { color: var(--text); font-weight: 500; }
+    .form-error { color: var(--danger); font-size: 15px; text-align: center; }
+
+    /* ===== Results ===== */
+    .results { display: none; margin-top: 52px; scroll-margin-top: 84px; }
+    .results.show { display: block; }
+    .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 22px;
+    }
+    .res-head { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
+    .res-meta { min-width: 0; }
+    .res-url { font: 500 18px/1.35 'Roboto', sans-serif; word-break: break-all; }
+    .res-date { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .score-box { text-align: left; }
+    @media (min-width: 640px) { .score-box { text-align: right; } }
+    .score { font-family: 'Oswald', sans-serif; font-weight: 500; font-size: clamp(56px, 12vw, 76px); line-height: 1; }
+    .score.good { color: var(--accent); }
+    .score.mid { color: var(--warn); }
+    .score.bad { color: var(--danger); }
+    .score-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; margin-top: 4px; }
+
+    .chips-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .stat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--line);
+        background: var(--bg-2);
+        border-radius: 50px;
+        font-size: 14px;
+        color: var(--muted);
+    }
+    .stat-chip b { color: var(--text); font-weight: 700; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+    .dot.ok { background: var(--accent); }
+    .dot.warn { background: var(--warn); }
+    .dot.bad { background: var(--danger); }
+    .dot.mute { background: #6b6b6b; }
+    .res-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+    .banner-danger {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        margin-top: 22px;
+        border: 1px solid rgba(255, 96, 96, .55);
+        background: rgba(255, 96, 96, .1);
+        border-radius: var(--radius);
+        padding: 20px 22px;
+        color: #ffdcdc;
+    }
+    .banner-danger .b-icon { color: var(--danger); font-size: 22px; line-height: 1.2; }
+    .banner-danger .b-title {
+        font-family: 'Oswald', sans-serif;
+        text-transform: uppercase;
+        color: var(--danger);
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+    .banner-danger .b-text { font-size: 15px; }
+
+    .section-block { margin-top: 46px; }
+    .section-title { font-size: clamp(24px, 4vw, 34px); }
+    .section-sub { color: var(--muted); font-size: 14px; margin: 8px 0 18px; }
+
+    /* Fix cards */
+    .fix-list { display: grid; gap: 14px; }
+    .fix-card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--danger);
+        border-radius: var(--radius);
+        padding: 20px 22px;
+    }
+    .fix-card.warn { border-left-color: var(--warn); }
+    .fix-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .fix-title { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-size: 18px; font-weight: 500; }
+    .status-mark { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .status-mark.crit { color: var(--danger); }
+    .status-mark.warn { color: var(--warn); }
+    .tag {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        background: var(--bg-2);
+        border-radius: 50px;
+        padding: 4px 11px;
+        white-space: nowrap;
+    }
+    .findings { display: grid; gap: 10px; }
+    .finding {
+        background: rgba(255, 255, 255, .03);
+        border: 1px solid rgba(255, 255, 255, .06);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 15px;
+        color: #e8e8e8;
+    }
+    .finding.rec { color: var(--muted); border-style: dashed; }
+    .f-label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+    .f-label.crit { color: var(--danger); }
+    .f-label.warn { color: var(--warn); }
+    .f-label.rec { color: var(--accent); }
+    .f-fix { margin-top: 8px; font-size: 14px; color: var(--muted); }
+    .f-fix b { color: var(--accent); font-weight: 500; }
+    .f-empty { color: var(--muted); font-size: 14px; }
+
+    /* OK grid */
+    .ok-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 640px) { .ok-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
+    .ok-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+    .ok-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(128, 210, 7, .12);
+        color: var(--accent);
+        font-size: 15px;
+        font-weight: 700;
+    }
+    .ok-title { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-size: 15px; font-weight: 500; margin: 10px 0 6px; }
+    .ok-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ok-text { color: var(--muted); font-size: 13px; margin-top: 8px; overflow-wrap: anywhere; }
+    .toggle-btn { margin-top: 16px; }
+
+    /* Skipped */
+    .skip-block {
+        margin-top: 26px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--bg-2);
+    }
+    .skip-block > summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 14px 18px;
+        color: var(--muted);
+        font-size: 15px;
+        user-select: none;
+    }
+    .skip-block > summary::-webkit-details-marker { display: none; }
+    .skip-block > summary::after { content: ' ▾'; color: var(--accent); }
+    .skip-block[open] > summary::after { content: ' ▴'; }
+    .skip-list { padding: 0 18px 16px; display: grid; gap: 8px; }
+    .skip-item { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+    .skip-item b { color: var(--text); font-weight: 500; }
+
+    /* Plan */
+    .plan-link {
+        display: inline-block;
+        margin-top: 28px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-color: rgba(255, 255, 255, .25);
+    }
+    .plan-link:hover { color: var(--text); }
+    .plan-block { margin-top: 14px; }
+
+    /* Tables */
+    .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--card);
+        -webkit-overflow-scrolling: touch;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px; }
+    th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th {
+        font-family: 'Oswald', sans-serif;
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: .08em;
+        color: var(--muted);
+        background: rgba(255, 255, 255, .03);
+    }
+    tr:last-child td { border-bottom: 0; }
+    tfoot td { font-weight: 700; color: var(--accent); }
+    .icon { font-size: 16px; font-weight: 700; }
+    .icon.ok { color: var(--accent); }
+    .icon.warn { color: var(--warn); }
+    .icon.bad { color: var(--danger); }
+    .icon.mute { color: #6b6b6b; }
+
+    /* ===== History ===== */
+    .history { margin-top: 56px; margin-bottom: 64px; scroll-margin-top: 84px; }
+    .history-list { display: grid; gap: 10px; }
+    .hist-item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px 16px;
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px 18px;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color .15s ease, background .15s ease;
+    }
+    .hist-item:hover { border-color: rgba(255, 255, 255, .3); background: #171717; }
+    .hist-item.active { border-color: var(--accent); background: rgba(128, 210, 7, .07); }
+    .hist-main { min-width: 0; }
+    .hist-url { font-weight: 500; overflow-wrap: anywhere; }
+    .hist-meta { color: var(--muted); font-size: 13px; margin-top: 3px; }
+    .hist-score { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 500; }
+    .hist-score.good { color: var(--accent); }
+    .hist-score.mid { color: var(--warn); }
+    .hist-score.bad { color: var(--danger); }
+    .hist-score.none { color: var(--muted); }
+
+    /* ===== Footer ===== */
+    .site-footer { border-top: 1px solid var(--line); padding: 24px 0 40px; color: var(--muted); font-size: 13px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>SEO/GEO Аудит сайта</h1>
-        <div class="form">
-            <div class="form-row">
-                <div>
-                    <label for="url">URL сайта</label>
-                    <input type="text" id="url" placeholder="example.com или https://example.com">
-                </div>
-                <div>
-                    <label for="keywords">Ключевые слова (через запятую)</label>
-                    <input type="text" id="keywords" placeholder="ключ1, ключ2">
-                </div>
-                <div>
-                    <label for="competitor">URL конкурента (опц.)</label>
-                    <input type="text" id="competitor" placeholder="конкурент.com">
-                </div>
-                <div>
-                    <button id="runBtn">Проверить</button>
-                </div>
-            </div>
-            <div>
-                <span id="spinner" class="spinner">⏳</span>
-            </div>
-        </div>
 
-        <div id="result" style="display:none">
-            <div class="score">Общий балл: <span id="overall">0</span>/100</div>
-
-            <h2>План работ</h2>
-            <table id="planTable">
-                <thead><tr><th>Проверка</th><th>Проблема</th><th>Как исправить</th><th>Часы</th></tr></thead>
-                <tbody></tbody>
-                <tfoot><tr><td colspan="3"><strong>Итого</strong></td><td id="totalHours">0</td></tr></tfoot>
-            </table>
-
-            <h2>Проверки</h2>
-            <div id="checks" class="cards"></div>
-
-            <div id="comparison" style="display:none; margin-top:20px">
-                <h2>Сравнение с конкурентом</h2>
-                <table><thead><tr><th>Метрика</th><th>Ваш сайт</th><th>Конкурент</th></tr></thead><tbody id="cmpBody"></tbody></table>
-            </div>
-
-            <div style="margin-top:16px">
-                <button id="exportMd">Экспорт Markdown</button>
-                <button id="exportJson" style="margin-left:8px">Экспорт JSON</button>
-            </div>
-        </div>
-
-        <div class="history">
-            <h2>История</h2>
-            <div id="historyList"></div>
-        </div>
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="logo" href="/">EVAPPS<span class="sep">·</span><span class="geo">SEO/GEO</span></a>
+        <nav class="header-nav"><a href="#history">История</a></nav>
     </div>
+</header>
 
-    <script>
-        let currentAudit = null;
-        let currentCompetitor = null;
-        let lastId = null;
+<main>
+    <!-- ===== Hero + form ===== -->
+    <section class="hero container">
+        <h1>Аудит сайта для SEO и ИИ-поиска</h1>
+        <p class="hero-sub">Техническое SEO, контент и готовность к цитированию в ИИ-поисках — одна проверка и понятный отчёт.</p>
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = String(text);
-            return div.innerHTML;
+        <form class="audit-form" id="auditForm" novalidate>
+            <div class="url-row">
+                <input class="input input-url" id="url" type="text" placeholder="example.com или https://example.com" autocomplete="off" aria-label="URL сайта">
+                <button class="btn btn-primary" id="runBtn" type="submit">Запустить аудит</button>
+            </div>
+
+            <div class="segmented" role="group" aria-label="Режим выбора проверок">
+                <button type="button" class="seg active" id="segAll" data-mode="all">Все проверки</button>
+                <button type="button" class="seg" id="segSelect" data-mode="select">Выбрать проверки</button>
+            </div>
+
+            <div class="picker" id="picker" hidden>
+                <div class="picker-head">
+                    <span class="picker-count" id="pickerCount">Выбрано 0 из 0</span>
+                    <span class="picker-count" id="pickerNote"></span>
+                </div>
+                <div id="pickerGroups"></div>
+            </div>
+
+            <details class="extra" id="extra">
+                <summary>Дополнительно <span class="muted-note">(необязательно)</span></summary>
+                <div class="extra-body">
+                    <div class="field">
+                        <label for="keywords">Ключевые слова через запятую</label>
+                        <input class="input" id="keywords" type="text" placeholder="seo, аудит сайта, продвижение" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label for="competitor">URL конкурента</label>
+                        <input class="input" id="competitor" type="text" placeholder="competitor.com" autocomplete="off">
+                    </div>
+                </div>
+            </details>
+
+            <div class="progress" id="progress" aria-live="polite">
+                <div class="progress-track"><i></i></div>
+                <div class="progress-text">Проверяем сайт… обычно 30–90 секунд · <b id="elapsed">0 сек</b></div>
+            </div>
+
+            <div class="form-error" id="formError" hidden></div>
+        </form>
+    </section>
+
+    <!-- ===== Results ===== -->
+    <section class="results container" id="results">
+        <div class="card">
+            <div class="res-head">
+                <div class="res-meta">
+                    <div class="res-url" id="resUrl"></div>
+                    <div class="res-date" id="resDate" hidden></div>
+                </div>
+                <div class="score-box">
+                    <div class="score" id="resScore">—</div>
+                    <div class="score-label">Индекс качества</div>
+                </div>
+            </div>
+            <div class="chips-row" id="summaryChips"></div>
+            <div class="res-actions">
+                <button class="btn btn-primary" id="pdfBtn" type="button">Скачать PDF для клиента</button>
+                <button class="btn btn-secondary" id="mdBtn" type="button">Markdown</button>
+                <button class="btn btn-secondary" id="jsonBtn" type="button">JSON</button>
+            </div>
+        </div>
+
+        <div class="banner-danger" id="blockedBanner" hidden>
+            <span class="b-icon">⚠</span>
+            <div>
+                <div class="b-title">Проверка заблокирована сайтом</div>
+                <div class="b-text" id="blockedText"></div>
+            </div>
+        </div>
+
+        <div id="sections">
+            <div class="section-block" id="fixBlock">
+                <h2 class="section-title">Нужно исправить</h2>
+                <p class="section-sub">Критичные и значимые замечания — с порядком действий.</p>
+                <div class="fix-list" id="fixList"></div>
+            </div>
+
+            <div class="section-block" id="okBlock">
+                <h2 class="section-title">В порядке</h2>
+                <p class="section-sub">Проверки, прошедшие без замечаний.</p>
+                <div class="ok-grid hidden" id="okGrid"></div>
+                <button class="btn btn-secondary btn-sm toggle-btn hidden" id="okToggle" type="button">Показать 0</button>
+            </div>
+        </div>
+
+        <details class="skip-block" id="skipBlock" hidden>
+            <summary id="skipSummary">Не проверено</summary>
+            <div class="skip-list" id="skipList"></div>
+        </details>
+
+        <button class="plan-link" id="planLink" type="button" hidden>Внутренний план работ (часы)</button>
+        <div class="plan-block hidden" id="planBlock">
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Проверка</th><th>Что сделать</th><th>Часы</th></tr></thead>
+                    <tbody id="planBody"></tbody>
+                    <tfoot><tr><td colspan="2">Итого</td><td id="planTotal">0</td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="section-block" id="cmpBlock" hidden>
+            <h2 class="section-title">Сравнение с конкурентом</h2>
+            <p class="section-sub" id="cmpNote" hidden></p>
+            <div class="table-wrap" id="cmpWrap">
+                <table>
+                    <thead><tr><th>Проверка</th><th>Наш статус</th><th>Конкурент</th></tr></thead>
+                    <tbody id="cmpBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== History ===== -->
+    <section class="history container" id="history">
+        <h2 class="section-title">История</h2>
+        <p class="section-sub">Прошлые аудиты — нажмите, чтобы открыть результат.</p>
+        <div class="history-list" id="historyList"></div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container">EVAPPS · SEO/GEO — аудит сайта для поиска и ИИ-ответов</div>
+</footer>
+
+<script>
+(function () {
+    'use strict';
+
+    var $ = function (id) { return document.getElementById(id); };
+
+    /* Escape helper for any server-provided string that must go into HTML. */
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = String(text === null || text === undefined ? '' : text);
+        return div.innerHTML;
+    }
+
+    var STATUS = {
+        ok:      { label: 'В порядке',        icon: '✓', cls: 'ok' },
+        warning: { label: 'Требует внимания', icon: '⚠', cls: 'warn' },
+        critical:{ label: 'Критично',         icon: '✕', cls: 'bad' },
+        error:   { label: 'Ошибка',           icon: '✕', cls: 'bad' },
+        skipped: { label: 'Не проверено',     icon: '—', cls: 'mute' }
+    };
+    function st(status) {
+        return STATUS[status] || { label: String(status || '—'), icon: '?', cls: 'mute' };
+    }
+
+    /* ===== State ===== */
+    var mode = 'all';
+    var catalog = null;          // [{id,title,category}]
+    var loadingChecks = false;
+    var selected = new Set();
+    var currentResult = null;
+    var currentCompetitor = null;
+    var lastId = null;
+    var timerId = null;
+    var okOpen = false;
+
+    /* ===== Helpers ===== */
+    function num(v) { var n = parseInt(v, 10); return isNaN(n) ? 0 : n; }
+
+    function fmtDate(v) {
+        if (v === null || v === undefined || v === '') return '';
+        var s = String(v);
+        if (/\d{4}-\d{2}-\d{2}/.test(s)) {
+            var d = new Date(s);
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            }
         }
+        return s;
+    }
 
-        async function loadHistory() {
-            const res = await fetch('/api/audits');
-            const data = await res.json();
-            const list = document.getElementById('historyList');
-            list.innerHTML = '';
-            data.forEach(a => {
-                const div = document.createElement('div');
-                div.className = 'history-item';
-                div.textContent = `${a.id}: ${a.url} (${a.score}/100) ${a.created_at}`;
-                div.onclick = () => loadAudit(a.id);
-                list.appendChild(div);
+    function scoreTone(score) {
+        if (typeof score !== 'number') return 'none';
+        if (score >= 80) return 'good';
+        if (score >= 50) return 'mid';
+        return 'bad';
+    }
+
+    function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined && text !== null) node.textContent = String(text);
+        return node;
+    }
+
+    function iconCell(status) {
+        var s = st(status);
+        var span = el('span', 'icon ' + s.cls, s.icon);
+        span.setAttribute('title', s.label);
+        return span;
+    }
+
+    /* ===== Checks picker ===== */
+    function updateCount() {
+        var total = catalog ? catalog.length : 0;
+        $('pickerCount').textContent = 'Выбрано ' + selected.size + ' из ' + total;
+    }
+
+    function syncChips() {
+        var boxes = $('pickerGroups').querySelectorAll('input[type="checkbox"]');
+        Array.prototype.forEach.call(boxes, function (cb) {
+            cb.checked = selected.has(cb.value);
+            var label = cb.closest('.chip');
+            if (label) label.classList.toggle('on', cb.checked);
+        });
+        updateCount();
+    }
+
+    function renderGroups() {
+        var wrap = $('pickerGroups');
+        wrap.textContent = '';
+        var groups = {};
+        catalog.forEach(function (c) {
+            var cat = c.category || 'Прочее';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(c);
+        });
+        Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'ru'); }).forEach(function (cat) {
+            var items = groups[cat];
+            var group = el('div', 'cat-group');
+
+            var head = el('div', 'cat-head');
+            head.appendChild(el('span', 'cat-name', cat));
+            var actions = el('div', 'cat-actions');
+            var allBtn = el('button', 'link-btn', 'все');
+            allBtn.type = 'button';
+            allBtn.addEventListener('click', function () {
+                items.forEach(function (c) { selected.add(String(c.id)); });
+                syncChips();
             });
-        }
-
-        async function loadAudit(id) {
-            const res = await fetch(`/api/audits/${id}`);
-            const data = await res.json();
-            lastId = data.id;
-            render(data.result, data.competitor || null);
-        }
-
-        function render(result, competitor) {
-            currentAudit = result;
-            currentCompetitor = competitor;
-            document.getElementById('result').style.display = 'block';
-            document.getElementById('overall').textContent = result.overall_score;
-            renderPlan(result.plan);
-            renderChecks(result.checks);
-            renderComparison(result, competitor);
-        }
-
-        function renderPlan(plan) {
-            const tbody = document.querySelector('#planTable tbody');
-            tbody.innerHTML = '';
-            (plan.findings || []).forEach(p => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${escapeHtml(p.check_title)}</td><td>${escapeHtml(p.text)}</td><td>${escapeHtml(p.fix || '')}</td><td>${p.hours}</td>`;
-                tbody.appendChild(tr);
+            var noneBtn = el('button', 'link-btn', 'снять');
+            noneBtn.type = 'button';
+            noneBtn.addEventListener('click', function () {
+                items.forEach(function (c) { selected.delete(String(c.id)); });
+                syncChips();
             });
-            document.getElementById('totalHours').textContent = plan.total_hours || 0;
-        }
+            actions.appendChild(allBtn);
+            actions.appendChild(noneBtn);
+            head.appendChild(actions);
+            group.appendChild(head);
 
-        function renderChecks(checks) {
-            const container = document.getElementById('checks');
-            container.innerHTML = '';
-            const grouped = {};
-            (checks || []).forEach(c => {
-                if (!grouped[c.category]) grouped[c.category] = [];
-                grouped[c.category].push(c);
-            });
-            Object.keys(grouped).sort().forEach(cat => {
-                const section = document.createElement('div');
-                section.innerHTML = `<h3>${escapeHtml(cat)}</h3>`;
-                grouped[cat].forEach(c => {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    let html = `<span class="badge ${escapeHtml(c.status)}">${escapeHtml(c.status)}</span> <strong>${escapeHtml(c.title)}</strong> (балл: ${c.score})`;
-                    if (c.findings && c.findings.length) {
-                        c.findings.forEach(f => {
-                            html += `<div class="finding"><strong>${escapeHtml(f.level)}</strong>: ${escapeHtml(f.text)}`;
-                            if (f.fix) html += `<br><em>Как исправить: ${escapeHtml(f.fix)}</em>`;
-                            html += `</div>`;
-                        });
-                    }
-                    card.innerHTML = html;
-                    section.appendChild(card);
+            var chips = el('div', 'chips');
+            items.forEach(function (c) {
+                var id = String(c.id);
+                var label = el('label', 'chip');
+                var cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = id;
+                cb.checked = selected.has(id);
+                if (cb.checked) label.classList.add('on');
+                cb.addEventListener('change', function () {
+                    if (cb.checked) selected.add(id); else selected.delete(id);
+                    label.classList.toggle('on', cb.checked);
+                    updateCount();
                 });
-                container.appendChild(section);
+                label.appendChild(cb);
+                label.appendChild(el('span', null, c.title || id));
+                chips.appendChild(label);
             });
-        }
+            group.appendChild(chips);
+            wrap.appendChild(group);
+        });
+    }
 
-        function renderComparison(result, competitor) {
-            const cmp = document.getElementById('comparison');
-            if (!competitor) { cmp.style.display = 'none'; return; }
-            cmp.style.display = 'block';
-            const body = document.getElementById('cmpBody');
-            body.innerHTML = '';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>Общий балл</td><td>${result.overall_score}</td><td>${competitor.overall_score !== undefined ? competitor.overall_score : 'N/A'}</td>`;
+    function ensureChecks() {
+        if (catalog) { renderGroups(); updateCount(); return; }
+        if (loadingChecks) return;
+        loadingChecks = true;
+        $('pickerGroups').textContent = '';
+        $('pickerNote').textContent = 'Загружаем список проверок…';
+        fetch('/api/checks')
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                catalog = (data && Array.isArray(data.checks)) ? data.checks : [];
+                $('pickerNote').textContent = '';
+                renderGroups();
+                updateCount();
+            })
+            .catch(function () {
+                catalog = [];
+                $('pickerNote').textContent = 'Не удалось загрузить список проверок — будут выполнены все.';
+                updateCount();
+            })
+            .then(function () { loadingChecks = false; });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.seg'), function (btn) {
+        btn.addEventListener('click', function () {
+            mode = btn.getAttribute('data-mode');
+            Array.prototype.forEach.call(document.querySelectorAll('.seg'), function (b) {
+                b.classList.toggle('active', b === btn);
+            });
+            if (mode === 'select') {
+                $('picker').hidden = false;
+                ensureChecks();
+            } else {
+                $('picker').hidden = true;
+            }
+            updateCount();
+        });
+    });
+
+    /* ===== Progress ===== */
+    function startProgress() {
+        $('formError').hidden = true;
+        $('progress').classList.add('show');
+        $('runBtn').disabled = true;
+        var t = 0;
+        $('elapsed').textContent = '0 сек';
+        timerId = setInterval(function () {
+            t += 1;
+            $('elapsed').textContent = t + ' сек';
+        }, 1000);
+    }
+
+    function stopProgress() {
+        if (timerId) { clearInterval(timerId); timerId = null; }
+        $('progress').classList.remove('show');
+        $('runBtn').disabled = false;
+    }
+
+    function showError(msg) {
+        var box = $('formError');
+        box.textContent = String(msg || 'Неизвестная ошибка.');
+        box.hidden = false;
+    }
+
+    /* ===== Submit ===== */
+    $('auditForm').addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var url = $('url').value.trim();
+        if (!url) { showError('Укажите URL сайта.'); return; }
+        if (mode === 'select' && catalog && catalog.length && selected.size === 0) {
+            showError('Выберите хотя бы одну проверку или переключитесь на «Все проверки».');
+            return;
+        }
+        var checks = mode === 'select' ? Array.from(selected) : [];
+        var keywords = $('keywords').value.trim();
+        var competitor = $('competitor').value.trim();
+
+        startProgress();
+        fetch('/api/audit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url, checks: checks, keywords: keywords, competitor: competitor })
+        })
+            .then(function (res) {
+                if (!res.ok) {
+                    var msg = 'Ошибка сервера (код ' + res.status + ').';
+                    return res.json().catch(function () { return null; }).then(function (j) {
+                        if (j && typeof j.detail === 'string' && j.detail) msg = j.detail;
+                        throw new Error(msg);
+                    });
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                lastId = (data && data.id !== undefined && data.id !== null) ? data.id : null;
+                var result = (data && data.result) ? data.result : data;
+                renderResult(result, (data && data.competitor) || null, lastId);
+                loadHistory();
+                $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(function (e) {
+                showError(e && e.message ? e.message : String(e));
+            })
+            .then(function () { stopProgress(); });
+    });
+
+    /* ===== Rendering ===== */
+    function summaryOf(result) {
+        var s = result.summary;
+        if (s && typeof s === 'object') {
+            return {
+                critical: num(s.critical),
+                warning: num(s.warning),
+                ok: num(s.ok),
+                skipped: num(s.skipped)
+            };
+        }
+        var out = { critical: 0, warning: 0, ok: 0, skipped: 0 };
+        (Array.isArray(result.checks) ? result.checks : []).forEach(function (c) {
+            if (c.status === 'critical') out.critical += 1;
+            else if (c.status === 'warning') out.warning += 1;
+            else if (c.status === 'ok') out.ok += 1;
+            else out.skipped += 1; /* skipped, error и прочее */
+        });
+        return out;
+    }
+
+    function renderChips(sum) {
+        var wrap = $('summaryChips');
+        wrap.textContent = '';
+        [
+            ['Критично', sum.critical, 'bad'],
+            ['Требует внимания', sum.warning, 'warn'],
+            ['В порядке', sum.ok, 'ok'],
+            ['Не проверено', sum.skipped, 'mute']
+        ].forEach(function (row) {
+            var chip = el('span', 'stat-chip');
+            chip.appendChild(el('span', 'dot ' + row[2]));
+            chip.appendChild(el('span', null, row[0]));
+            chip.appendChild(el('b', null, String(row[1])));
+            wrap.appendChild(chip);
+        });
+    }
+
+    function firstFindingText(result) {
+        var checks = Array.isArray(result.checks) ? result.checks : [];
+        for (var i = 0; i < checks.length; i++) {
+            var f = checks[i].findings;
+            if (f && f.length && f[0].text) return String(f[0].text);
+        }
+        if (Array.isArray(result.findings) && result.findings.length && result.findings[0].text) {
+            return String(result.findings[0].text);
+        }
+        return 'Сайт не смог быть проверен: сервер вернул защитную страницу вместо контента.';
+    }
+
+    function findingNode(f) {
+        var isRec = f.level === 'info';
+        var box = el('div', 'finding' + (isRec ? ' rec' : ''));
+        var labelCls = 'f-label';
+        var labelText;
+        if (isRec) { labelCls += ' rec'; labelText = 'Рекомендация'; }
+        else if (f.level === 'critical') { labelCls += ' crit'; labelText = 'Критично'; }
+        else if (f.level === 'warning') { labelCls += ' warn'; labelText = 'Внимание'; }
+        else { labelText = 'Замечание'; }
+        box.appendChild(el('span', labelCls, labelText));
+        box.appendChild(el('div', 'f-text', f.text || ''));
+        if (f.fix) {
+            var fix = el('div', 'f-fix');
+            fix.appendChild(el('b', null, 'Как исправить: '));
+            fix.appendChild(document.createTextNode(String(f.fix)));
+            box.appendChild(fix);
+        }
+        return box;
+    }
+
+    function renderFixList(checks) {
+        var wrap = $('fixList');
+        wrap.textContent = '';
+        var list = checks
+            .filter(function (c) { return c.status === 'critical' || c.status === 'warning'; })
+            .slice()
+            .sort(function (a, b) {
+                var ra = a.status === 'critical' ? 0 : 1;
+                var rb = b.status === 'critical' ? 0 : 1;
+                return ra - rb;
+            });
+
+        if (!list.length) {
+            wrap.appendChild(el('p', 'empty-note', 'Критичных и значимых замечаний не найдено.'));
+            return;
+        }
+        list.forEach(function (c) {
+            var card = el('div', 'fix-card' + (c.status === 'warning' ? ' warn' : ''));
+            var top = el('div', 'fix-top');
+            top.appendChild(el('span', 'status-mark ' + (c.status === 'warning' ? 'warn' : 'crit'),
+                c.status === 'warning' ? 'Требует внимания' : 'Критично'));
+            top.appendChild(el('span', 'fix-title', c.title || ''));
+            if (c.category) top.appendChild(el('span', 'tag', c.category));
+            card.appendChild(top);
+
+            var findings = el('div', 'findings');
+            var items = (Array.isArray(c.findings) ? c.findings : []).filter(function (f) {
+                return f.level !== 'ok';
+            });
+            if (!items.length) {
+                findings.appendChild(el('div', 'f-empty', 'Замечания зафиксированы без детализации.'));
+            } else {
+                items.forEach(function (f) { findings.appendChild(findingNode(f)); });
+            }
+            card.appendChild(findings);
+            wrap.appendChild(card);
+        });
+    }
+
+    function renderOkGrid(checks) {
+        var grid = $('okGrid');
+        var toggle = $('okToggle');
+        grid.textContent = '';
+        var list = checks.filter(function (c) { return c.status === 'ok'; });
+        okOpen = false;
+        grid.classList.add('hidden');
+
+        if (!list.length) {
+            toggle.classList.add('hidden');
+            return;
+        }
+        toggle.classList.remove('hidden');
+        toggle.setAttribute('data-count', String(list.length));
+        toggle.textContent = 'Показать ' + list.length;
+
+        list.forEach(function (c) {
+            var card = el('div', 'ok-card');
+            card.appendChild(el('span', 'ok-icon', '✓'));
+            card.appendChild(el('div', 'ok-title', c.title || ''));
+            if (c.category) {
+                var meta = el('div', 'ok-meta');
+                meta.appendChild(el('span', 'tag', c.category));
+                card.appendChild(meta);
+            }
+            var first = (Array.isArray(c.findings) && c.findings.length) ? c.findings[0].text : '';
+            card.appendChild(el('div', 'ok-text', first || 'Проверка пройдена.'));
+            grid.appendChild(card);
+        });
+    }
+
+    $('okToggle').addEventListener('click', function () {
+        okOpen = !okOpen;
+        $('okGrid').classList.toggle('hidden', !okOpen);
+        var n = $('okToggle').getAttribute('data-count') || '0';
+        $('okToggle').textContent = okOpen ? 'Скрыть' : 'Показать ' + n;
+    });
+
+    function renderSkipped(checks) {
+        var block = $('skipBlock');
+        var list = checks.filter(function (c) { return c.status === 'skipped' || c.status === 'error'; });
+        var wrap = $('skipList');
+        wrap.textContent = '';
+        if (!list.length) { block.hidden = true; return; }
+        block.hidden = false;
+        $('skipSummary').textContent = 'Не проверено · ' + list.length;
+        list.forEach(function (c) {
+            var reason = '';
+            if (Array.isArray(c.findings) && c.findings.length && c.findings[0].text) {
+                reason = String(c.findings[0].text);
+            } else if (c.status === 'error') {
+                reason = 'Ошибка проверки.';
+            } else {
+                reason = 'Причина не указана.';
+            }
+            var item = el('div', 'skip-item');
+            item.appendChild(el('b', null, c.title || c.id || 'Проверка'));
+            item.appendChild(document.createTextNode(' — ' + reason));
+            wrap.appendChild(item);
+        });
+    }
+
+    function renderPlan(result) {
+        var plan = result.plan || {};
+        var findings = Array.isArray(plan.findings) ? plan.findings : [];
+        var link = $('planLink');
+        var block = $('planBlock');
+        block.classList.add('hidden');
+        if (!findings.length) { link.hidden = true; return; }
+        link.hidden = false;
+
+        var tbody = $('planBody');
+        tbody.textContent = '';
+        var total = 0;
+        findings.forEach(function (p) {
+            var tr = document.createElement('tr');
+            var td1 = document.createElement('td'); td1.textContent = p.check_title || '';
+            var td2 = document.createElement('td'); td2.textContent = p.text || '';
+            var td3 = document.createElement('td'); td3.textContent = String(p.hours === undefined || p.hours === null ? '—' : p.hours);
+            var h = parseFloat(p.hours);
+            if (!isNaN(h)) total += h;
+            tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+            tbody.appendChild(tr);
+        });
+        var shown = (plan.total_hours !== undefined && plan.total_hours !== null) ? plan.total_hours : total;
+        $('planTotal').textContent = String(shown);
+    }
+
+    $('planLink').addEventListener('click', function () {
+        $('planBlock').classList.toggle('hidden');
+    });
+
+    function renderComparison(result, competitor) {
+        var block = $('cmpBlock');
+        var note = $('cmpNote');
+        var wrap = $('cmpWrap');
+        var body = $('cmpBody');
+        body.textContent = '';
+        if (!competitor) { block.hidden = true; return; }
+        block.hidden = false;
+
+        if (competitor.error) {
+            note.hidden = false;
+            note.textContent = 'Не удалось получить данные конкурента: ' + String(competitor.error);
+            wrap.hidden = true;
+            return;
+        }
+        note.hidden = true;
+        wrap.hidden = false;
+
+        var ourChecks = Array.isArray(result.checks) ? result.checks : [];
+        var compChecks = Array.isArray(competitor.checks) ? competitor.checks : [];
+        var byId = {};
+        var byTitle = {};
+        compChecks.forEach(function (c) {
+            if (c.id !== undefined && c.id !== null) byId[String(c.id)] = c;
+            if (c.title) byTitle[String(c.title)] = c;
+        });
+
+        var used = {};
+        function addRow(title, ours, theirs) {
+            var tr = document.createElement('tr');
+            var td1 = document.createElement('td'); td1.textContent = title || '';
+            var td2 = document.createElement('td'); td2.appendChild(iconCell(ours));
+            var td3 = document.createElement('td'); td3.appendChild(iconCell(theirs));
+            tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
             body.appendChild(tr);
         }
 
-        document.getElementById('runBtn').onclick = async () => {
-            const url = document.getElementById('url').value;
-            const keywords = document.getElementById('keywords').value;
-            const competitor = document.getElementById('competitor').value;
-            if (!url) { alert('Укажите URL'); return; }
-            const btn = document.getElementById('runBtn');
-            const spinner = document.getElementById('spinner');
-            btn.disabled = true;
-            spinner.classList.add('active');
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({url, keywords, competitor: competitor || undefined})
-                });
-                if (!res.ok) throw new Error('audit failed');
-                const data = await res.json();
-                lastId = data.id;
-                render(data.result, data.competitor);
-                loadHistory();
-            } catch (e) {
-                alert('Ошибка: ' + e);
-            } finally {
-                btn.disabled = false;
-                spinner.classList.remove('active');
-            }
-        };
+        ourChecks.forEach(function (c) {
+            var key = c.id !== undefined && c.id !== null ? String(c.id) : '';
+            var match = (key && byId[key]) || (c.title && byTitle[String(c.title)]) || null;
+            if (match && match.id !== undefined && match.id !== null) used[String(match.id)] = true;
+            addRow(c.title, c.status, match ? match.status : 'skipped');
+        });
+        compChecks.forEach(function (c) {
+            var key = c.id !== undefined && c.id !== null ? String(c.id) : '';
+            if (key && used[key]) return;
+            addRow(c.title, 'skipped', c.status);
+        });
+    }
 
-        document.getElementById('exportMd').onclick = async () => {
-            if (!lastId) { alert('Нет ID аудита'); return; }
-            window.open(`/api/audits/${lastId}/export.md`, '_blank');
-        };
+    function renderResult(result, competitor, id) {
+        result = result || {};
+        currentResult = result;
+        currentCompetitor = competitor || null;
+        if (id !== undefined && id !== null) lastId = id;
 
-        document.getElementById('exportJson').onclick = () => {
-            if (!currentAudit) return;
-            const blob = new Blob([JSON.stringify(currentAudit, null, 2)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'audit.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        };
+        $('results').classList.add('show');
 
-        loadHistory();
-    </script>
+        $('resUrl').textContent = result.url || $('url').value.trim() || '—';
+
+        var dateEl = $('resDate');
+        if (result.created_at) {
+            dateEl.hidden = false;
+            dateEl.textContent = fmtDate(result.created_at);
+        } else {
+            dateEl.hidden = false;
+            dateEl.textContent = 'Проверено: ' + new Date().toLocaleString('ru-RU');
+        }
+
+        var score = (typeof result.overall_score === 'number')
+            ? result.overall_score
+            : (typeof result.score === 'number' ? result.score : null);
+        var scoreEl = $('resScore');
+        scoreEl.textContent = score === null ? '—' : String(score);
+        scoreEl.className = 'score ' + (score === null ? '' : scoreTone(score));
+
+        renderChips(summaryOf(result));
+
+        var hasId = lastId !== null && lastId !== undefined;
+        $('pdfBtn').disabled = !hasId;
+        $('mdBtn').disabled = !hasId;
+
+        var checks = Array.isArray(result.checks) ? result.checks : [];
+        var blocked = !!result.blocked;
+        $('blockedBanner').hidden = !blocked;
+        $('sections').hidden = blocked;
+
+        if (blocked) {
+            $('blockedText').textContent = firstFindingText(result);
+        } else {
+            renderFixList(checks);
+            renderOkGrid(checks);
+        }
+        renderSkipped(checks);
+        renderPlan(result);
+        renderComparison(result, competitor);
+        markActive();
+    }
+
+    /* ===== Exports ===== */
+    $('pdfBtn').addEventListener('click', function () {
+        if (lastId === null || lastId === undefined) return;
+        window.location = `/api/audits/${lastId}/report.pdf`;
+    });
+    $('mdBtn').addEventListener('click', function () {
+        if (lastId === null || lastId === undefined) return;
+        window.open(`/api/audits/${lastId}/export.md`, '_blank');
+    });
+    $('jsonBtn').addEventListener('click', function () {
+        if (!currentResult) return;
+        var blob = new Blob([JSON.stringify(currentResult, null, 2)], { type: 'application/json;charset=utf-8' });
+        var blobUrl = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'seo-geo-audit.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 1000);
+    });
+
+    /* ===== History ===== */
+    function markActive() {
+        Array.prototype.forEach.call(document.querySelectorAll('.hist-item'), function (item) {
+            item.classList.toggle('active', item.getAttribute('data-id') === String(lastId));
+        });
+    }
+
+    function renderHistory(items) {
+        var list = $('historyList');
+        list.textContent = '';
+        if (!items.length) {
+            list.appendChild(el('p', 'empty-note', 'Аудитов пока нет — запустите первый.'));
+            return;
+        }
+        items.forEach(function (a) {
+            if (a.id === undefined || a.id === null) return;
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'hist-item' + (String(a.id) === String(lastId) ? ' active' : '');
+            btn.setAttribute('data-id', String(a.id));
+
+            var main = el('div', 'hist-main');
+            main.appendChild(el('div', 'hist-url', a.url || ('Аудит #' + a.id)));
+            if (a.created_at) main.appendChild(el('div', 'hist-meta', fmtDate(a.created_at)));
+            btn.appendChild(main);
+
+            var tone = (typeof a.score === 'number') ? scoreTone(a.score) : 'none';
+            btn.appendChild(el('span', 'hist-score ' + tone, (typeof a.score === 'number') ? a.score : '—'));
+
+            btn.addEventListener('click', function () { loadAudit(a.id); });
+            list.appendChild(btn);
+        });
+    }
+
+    function loadHistory() {
+        fetch('/api/audits')
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) { renderHistory(Array.isArray(data) ? data : []); })
+            .catch(function () {
+                var list = $('historyList');
+                list.textContent = '';
+                list.appendChild(el('p', 'empty-note', 'История недоступна.'));
+            });
+    }
+
+    function loadAudit(id) {
+        fetch('/api/audits/' + id)
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                if (data && data.result) {
+                    renderResult(data.result, data.competitor || null, (data.id !== undefined && data.id !== null) ? data.id : id);
+                } else {
+                    renderResult(data, null, id);
+                }
+                $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(function () { /* тихо: история остаётся на месте */ });
+    }
+
+    /* ===== Init ===== */
+    updateCount();
+    loadHistory();
+    void escapeHtml;
+})();
+</script>
 </body>
 </html>
