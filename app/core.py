@@ -144,6 +144,11 @@ class AuditContext:
         key_parts = [url]
         for k in sorted(headers.keys()):
             key_parts.append(f"{k}:{headers[k]}")
+        params = kw.get("params") or {}
+        for k in sorted(params):
+            key_parts.append(f"?{k}={params[k]}")
+        # Без этого GET и HEAD-подобные запросы с разными редиректами делили бы кэш
+        key_parts.append(f"redirects:{kw.get('follow_redirects')}")
         return hashlib.md5("|".join(key_parts).encode()).hexdigest()
 
     async def get(self, url: str, **kw: Any) -> httpx.Response | None:
@@ -153,6 +158,9 @@ class AuditContext:
         req_kw: Dict[str, Any] = {"follow_redirects": follow_redirects, "timeout": timeout}
         if headers:
             req_kw["headers"] = headers
+        params = kw.pop("params", None)
+        if params:
+            req_kw["params"] = params
         cache_key = self._cache_key(url, **req_kw)
         async with self._lock:
             if cache_key in self._cache:
