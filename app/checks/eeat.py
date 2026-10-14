@@ -128,14 +128,13 @@ _TRUST_PATTERNS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
         "terms",
         (
             "оферт",
-            "пользовательск",
-            "использовани",
-            "услови",
+            "пользовательское соглашение",
+            "условия использования",
+            "условия продажи",
+            "условия покупки",
             "terms",
-            "offer",
             "pogoji",
-            "soglasje",
-            "terms-of",
+            "splošni pogoji",
         ),
     ),
     (
@@ -160,14 +159,13 @@ _TRUST_PATTERNS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
         (
             "о нас",
             "о компании",
-            "о сайте",
-            "about",
-            "company",
-            "compagnie",
-            "o nas",
-            "компани",
-            "podjetj",
             "о бренде",
+            "o-kompanii",
+            "o-nas",
+            "about",
+            "o nas",
+            "o-podjetju",
+            "o podjetju",
         ),
     ),
 )
@@ -288,7 +286,8 @@ def collect_links(html: str, base: str = "") -> List[Tuple[str, str]]:
         if not href:
             continue
         low = href.lower()
-        if low.startswith(_NON_PAGE_PREFIXES):
+        if low.startswith(_NON_PAGE_PREFIXES) or "?" in low:
+            # ссылки с параметрами — фильтры и сортировки каталога, а не страницы доверия
             continue
         anchor = node.text(separator=" ", strip=True)
         key = (href, anchor)
@@ -334,15 +333,14 @@ def find_section_link(links: List[Tuple[str, str]], keywords: Tuple[str, ...]) -
 
 
 def _is_shop(html: str) -> bool:
-    """Эвристика: интернет-магазин (CMS-маркеры, корзина, ссылки на товары)."""
-    if detect_shop(html or ""):
-        return True
-    low = (html or "").lower()
-    if "/product/" in low or "/products/" in low or "/tovar/" in low or "/catalog/" in low:
-        return True
-    if "add-to-cart" in low or "addtocart" in low or "woocommerce" in low:
-        return True
-    return False
+    """Интернет-магазин только по явным признакам покупки: корзина, CMS магазина, разметка Product/Offer.
+
+    Ссылки вида /product/ или /catalog/ не считаем — они есть и у сайтов услуг (evapps.ru/product/).
+    """
+    return bool(re.search(
+        r"woocommerce|add-to-cart|add_to_cart|addtocart|cdn\.shopify|\"@type\"\s*:\s*\"(Product|Offer)\"|в корзину|add to cart",
+        html or "", re.I,
+    ))
 
 
 def _word_count(html: str) -> int:

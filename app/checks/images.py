@@ -139,7 +139,18 @@ def parse_images(html: str, base: str = "") -> List[Dict[str, Any]]:
                 "content_type": "",
             }
         )
-    return images
+    return [img for img in images if not _is_tracking_pixel(img)]
+
+
+_TRACKER_HOSTS = ("mc.yandex.ru", "facebook.com", "google-analytics.com", "googletagmanager.com", "vk.com/rtrg", "top-fwz1.mail.ru")
+
+
+def _is_tracking_pixel(img: Dict[str, Any]) -> bool:
+    """Счётчики (Метрика, пиксели соцсетей) — не контентные изображения, их не оцениваем."""
+    src = str(img.get("src") or "")
+    if any(host in src for host in _TRACKER_HOSTS):
+        return True
+    return str(img.get("width")) in ("0", "1") and str(img.get("height")) in ("0", "1")
 
 
 def _extension(url: str) -> str:
