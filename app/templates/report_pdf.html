@@ -4,261 +4,229 @@
 <meta charset="utf-8">
 <title>SEO/GEO аудит — {{ result.host or result.url }}</title>
 <style>
-@font-face {
-    font-family: "Oswald";
-    src: url(fonts/Oswald-Medium.woff2) format("woff2");
-    font-weight: 500;
-}
-@font-face {
-    font-family: "Roboto";
-    src: url(fonts/Roboto.woff2) format("woff2");
-    font-weight: 400;
-}
-@font-face {
-    font-family: "Roboto Medium";
-    src: url(fonts/Robotomedium.woff2) format("woff2");
-    font-weight: 500;
-}
+@font-face { font-family: "Oswald"; src: url(fonts/Oswald-Medium.woff2) format("woff2"); font-weight: 500; }
+@font-face { font-family: "Roboto"; src: url(fonts/Roboto.woff2) format("woff2"); font-weight: 400; }
+@font-face { font-family: "Roboto Medium"; src: url(fonts/Robotomedium.woff2) format("woff2"); font-weight: 500; }
 
+/* Тёмная тема в стиле EvApps «Фин»: чёрный фон, салатовый акцент */
 @page {
     size: A4;
-    margin: 16mm;
+    margin: 18mm 16mm 18mm;
+    background: #000;
+    @top-left {
+        content: "";
+        width: 26mm;
+        height: 11mm;
+        background: url(logo-evapps.svg) no-repeat left center;
+        background-size: contain;
+    }
+    @top-right {
+        content: "SEO / GEO АУДИТ";
+        font-family: "Oswald", sans-serif;
+        font-size: 8pt;
+        letter-spacing: 0.18em;
+        color: #80d207;
+    }
+    @bottom-left {
+        content: "evapps.ru";
+        font-family: "Roboto", sans-serif;
+        font-size: 8pt;
+        color: #6b6b6b;
+    }
     @bottom-right {
         content: counter(page) " / " counter(pages);
         font-family: "Roboto", sans-serif;
-        font-size: 9pt;
-        color: #888;
+        font-size: 8pt;
+        color: #6b6b6b;
     }
+}
+@page :first {
+    @top-left { content: none; }
+    @top-right { content: none; }
 }
 
 body {
     margin: 0;
-    padding: 0;
     font-family: "Roboto", "DejaVu Sans", sans-serif;
     font-size: 10.5pt;
-    line-height: 1.45;
-    color: #111;
-    background: #ffffff;
+    line-height: 1.5;
+    color: #e9e9e9;
+    background: #000;
 }
 
 h1, h2, h3 {
     font-family: "Oswald", "DejaVu Sans", sans-serif;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #111;
+    letter-spacing: 0.02em;
+    line-height: 1.05;
+    color: #fff;
     margin: 0 0 8pt;
     break-after: avoid;
     page-break-after: avoid;
 }
-h2 { font-size: 16pt; border-bottom: 2pt solid #80d207; padding-bottom: 4pt; }
-h3 { font-size: 12pt; margin-top: 12pt; }
+h2 { font-size: 20pt; margin-top: 4pt; }
+.accent { color: #80d207; }
+h3 { font-size: 11pt; letter-spacing: 0.12em; margin: 14pt 0 8pt; }
 
 /* ===== Обложка ===== */
 .cover {
-    border-bottom: 3pt solid #80d207;
-    padding-bottom: 10pt;
-    margin-bottom: 12pt;
+    margin: -2mm -4mm 14pt;
+    padding: 16pt 18pt 18pt;
+    border-radius: 14pt;
+    background: radial-gradient(circle at 85% 0%, rgba(128, 210, 7, 0.38) 0%, rgba(128, 210, 7, 0.10) 32%, rgba(0, 0, 0, 0) 62%), #0d0d0d;
+    border: 1pt solid rgba(255, 255, 255, 0.10);
 }
-.brand {
-    font-family: "Oswald", "DejaVu Sans", sans-serif;
-    text-transform: uppercase;
-    font-size: 11pt;
-    letter-spacing: 0.14em;
+.cover-logo { height: 15mm; margin-bottom: 14pt; }
+.eyebrow {
+    font-family: "Oswald", sans-serif;
+    font-size: 9pt;
+    letter-spacing: 0.22em;
     color: #80d207;
+    text-transform: uppercase;
 }
-.cover h1 { font-size: 23pt; margin: 6pt 0 4pt; }
-.cover .site-url {
+.cover h1 { font-size: 30pt; margin: 6pt 0 10pt; }
+.site-pill {
+    display: inline-block;
     font-family: "Roboto Medium", sans-serif;
-    font-size: 13pt;
-    color: #111;
-    margin-bottom: 2pt;
+    font-size: 11.5pt;
+    color: #000;
+    background: #80d207;
+    border-radius: 30pt;
+    padding: 4pt 12pt;
 }
-.cover .report-date { font-size: 9.5pt; color: #555; }
+.report-date { margin-top: 8pt; font-size: 9pt; color: #9a9a9a; }
 
 /* ===== Балл и сводка ===== */
-.summary-table { width: 100%; margin: 10pt 0 14pt; border-collapse: collapse; }
-.summary-table td { vertical-align: middle; padding: 4pt; }
-.score-cell { width: 30%; text-align: center; border: 2pt solid #80d207; padding: 10pt 4pt; }
-.score-value {
-    font-family: "Oswald", sans-serif;
-    font-size: 34pt;
-    line-height: 1;
-    color: #111;
+.stats { width: 100%; border-collapse: separate; border-spacing: 6pt 0; margin: 0 -6pt 16pt; }
+.stat {
+    background: #141414;
+    border: 1pt solid rgba(255, 255, 255, 0.10);
+    border-radius: 12pt;
+    padding: 10pt 12pt;
+    vertical-align: top;
 }
-.score-caption { font-size: 9pt; color: #555; text-transform: uppercase; letter-spacing: 0.08em; }
-.counts-cell { width: 70%; }
-.counts { width: 100%; border-collapse: collapse; }
-.counts td { border-bottom: 1pt solid #e2e2e2; padding: 4pt 6pt; font-size: 10pt; }
-.counts .num {
-    font-family: "Roboto Medium", sans-serif;
-    text-align: right;
-    width: 36pt;
-    font-size: 12pt;
-}
-.num.critical { color: #c62828; }
-.num.warning { color: #e07b00; }
-.num.ok { color: #5a9e00; }
-.num.skipped { color: #777; }
+.stat-value { font-family: "Oswald", sans-serif; font-size: 30pt; line-height: 1; color: #fff; }
+.stat-label { margin-top: 5pt; font-size: 8.5pt; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9a9a; }
+.stat.score .stat-value { color: #80d207; font-size: 38pt; }
+.stat.score .stat-value small { font-size: 14pt; color: #6b6b6b; }
+.stat.critical .stat-value { color: #ff6060; }
+.stat.warning .stat-value { color: #ffb020; }
+.bar { height: 4pt; margin-top: 8pt; border-radius: 4pt; background: #262626; }
+.bar span { display: block; height: 4pt; border-radius: 4pt; background: #80d207; }
 
-section { margin-bottom: 14pt; }
+section { margin-bottom: 12pt; }
 
 /* ===== Пункты отчёта ===== */
-.prio.critical { color: #c62828; }
-.prio.warning { color: #e07b00; }
-.prio.info { color: #4a7d00; }
+.prio { display: inline-block; padding: 2pt 10pt; border-radius: 20pt; font-size: 8.5pt; color: #000; }
+.prio.critical { background: #ff6060; }
+.prio.warning { background: #ffb020; }
+.prio.info { background: #80d207; }
 
 .item {
-    border: 1pt solid #e2e2e2;
-    border-left: 4pt solid #80d207;
-    padding: 7pt 9pt;
+    background: #141414;
+    border: 1pt solid rgba(255, 255, 255, 0.08);
+    border-left: 3pt solid #80d207;
+    border-radius: 10pt;
+    padding: 8pt 11pt;
     margin-bottom: 7pt;
     break-inside: avoid;
     page-break-inside: avoid;
 }
-.item.critical { border-left-color: #c62828; }
-.item.warning { border-left-color: #e07b00; }
-.item.info { border-left-color: #80d207; }
-.item-head { margin-bottom: 1pt; }
-.item-title { font-family: "Roboto Medium", sans-serif; font-size: 11pt; color: #111; }
-.badge {
-    font-family: "Oswald", sans-serif;
-    text-transform: uppercase;
-    font-size: 8pt;
-    letter-spacing: 0.06em;
-    padding: 1pt 6pt;
-    margin-left: 6pt;
-    color: #ffffff;
-}
-.badge.critical { background: #c62828; }
-.badge.warning { background: #e07b00; }
-.badge.info { background: #80d207; }
-.item-cat { font-size: 8.5pt; color: #777; margin-bottom: 4pt; }
-.item-text { margin: 2pt 0; }
-.item-text strong { font-family: "Roboto Medium", sans-serif; }
+.item.critical { border-left-color: #ff6060; }
+.item.warning { border-left-color: #ffb020; }
+.item-title { font-family: "Roboto Medium", sans-serif; font-size: 11pt; color: #fff; }
+.item-cat { font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; color: #6b6b6b; margin: 1pt 0 5pt; }
+.item-text { margin: 3pt 0; color: #d6d6d6; }
+.label { font-family: "Roboto Medium", sans-serif; color: #fff; }
+.label.fix { color: #80d207; }
 
-/* ===== Таблица «в порядке» ===== */
-.ok-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
-.ok-table th {
-    text-align: left;
-    font-family: "Roboto Medium", sans-serif;
-    background: #f3f7ea;
-    border-bottom: 1.5pt solid #80d207;
-    padding: 4pt 6pt;
-    color: #111;
+/* ===== Финальный блок ===== */
+.cta {
+    margin-top: 16pt;
+    padding: 14pt 16pt;
+    border-radius: 14pt;
+    background: radial-gradient(circle at 0% 100%, rgba(128, 210, 7, 0.30) 0%, rgba(0, 0, 0, 0) 60%), #0d0d0d;
+    border: 1pt solid rgba(128, 210, 7, 0.45);
+    break-inside: avoid;
 }
-.ok-table td { border-bottom: 0.5pt solid #e2e2e2; padding: 3.5pt 6pt; vertical-align: top; }
-
-/* ===== skipped (не используется в клиентском PDF) ===== */
-.skipped-list { margin: 0; padding-left: 14pt; font-size: 9.5pt; }
-.skipped-list li { margin-bottom: 3pt; }
+.cta h2 { font-size: 16pt; margin: 0 0 6pt; }
+.cta p { margin: 0; color: #cfcfcf; }
 
 .blocked-box {
-    border: 2pt solid #c62828;
-    padding: 10pt 12pt;
-    margin-top: 10pt;
+    background: #141414;
+    border: 1pt solid #ff6060;
+    border-radius: 12pt;
+    padding: 12pt 14pt;
 }
-.blocked-title {
-    font-family: "Oswald", sans-serif;
-    text-transform: uppercase;
-    font-size: 14pt;
-    color: #c62828;
-    margin-bottom: 6pt;
-}
+.blocked-title { font-family: "Oswald", sans-serif; text-transform: uppercase; font-size: 14pt; color: #ff6060; margin-bottom: 6pt; }
 </style>
 </head>
 <body>
 
 <div class="cover">
-    <div class="brand">EVAPPS · SEO/GEO АУДИТ</div>
-    <h1>Отчёт по аудиту</h1>
-    <div class="site-url">{{ result.url }}</div>
-    <div class="report-date">Дата: {{ report_date }}</div>
+    <img class="cover-logo" src="logo-evapps.svg" alt="EvApps">
+    <div class="eyebrow">Аудит сайта · SEO и ИИ-поиск</div>
+    <h1>Что мешает сайту <span class="accent">расти</span><br>в поиске и ответах ИИ</h1>
+    <span class="site-pill">{{ result.url }}</span>
+    <div class="report-date">Дата проверки: {{ report_date }}</div>
 </div>
 
 {% if result.blocked %}
 <div class="blocked-box">
     <div class="blocked-title">Аудит остановлен</div>
-    {% for c in result.checks %}
-        {% for f in c.findings %}
-        <div class="item critical">
-            <div class="item-head">
-                <span class="item-title">{{ c.title }}</span><span class="badge critical">Критично</span>
-            </div>
-            <div class="item-cat">{{ c.category }}</div>
-            <p class="item-text"><strong>Проблема:</strong> {{ f.text }}</p>
-            {% if f.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ f.fix }}</p>{% endif %}
-        </div>
-        {% endfor %}
-    {% endfor %}
+    {% for c in result.checks %}{% for f in c.findings %}
+    <p class="item-text">{{ f.text }}</p>
+    {% if f.fix %}<p class="item-text"><span class="label fix">Как исправить:</span> {{ f.fix }}</p>{% endif %}
+    {% endfor %}{% endfor %}
 </div>
 {% else %}
 
-<table class="summary-table" cellspacing="0" cellpadding="0">
+<table class="stats">
     <tr>
-        <td class="score-cell">
-            <div class="score-value">{{ result.overall_score }}</div>
-            <div class="score-caption">Общий балл</div>
+        <td class="stat score" style="width: 40%">
+            <div class="stat-value">{{ result.overall_score }}<small> / 100</small></div>
+            <div class="stat-label">Индекс качества</div>
+            <div class="bar"><span style="width: {{ result.overall_score or 0 }}%"></span></div>
         </td>
-        <td class="counts-cell">
-            <table class="counts">
-                <tr><td>Критично</td><td class="num critical">{{ summary.critical }}</td></tr>
-                <tr><td>Требует внимания</td><td class="num warning">{{ summary.warning }}</td></tr>
-            </table>
+        <td class="stat critical" style="width: 30%">
+            <div class="stat-value">{{ summary.critical }}</div>
+            <div class="stat-label">Критичных проблем</div>
+        </td>
+        <td class="stat warning" style="width: 30%">
+            <div class="stat-value">{{ summary.warning }}</div>
+            <div class="stat-label">Требуют внимания</div>
         </td>
     </tr>
 </table>
 
 <section>
-    <h2>Что нужно исправить</h2>
+    <h2>Что нужно <span class="accent">исправить</span></h2>
 
-    {% if critical_items %}
-    <h3 class="prio critical">Критично</h3>
-    {% for item in critical_items %}
-    <div class="item critical">
-        <div class="item-head">
-            <span class="item-title">{{ item.title }}</span><span class="badge critical">Критично</span>
-        </div>
+    {% for level, items, label in [("critical", critical_items, "Критично"), ("warning", warning_items, "Требует внимания"), ("info", info_items, "Рекомендации")] %}
+    {% if items %}
+    <h3><span class="prio {{ level }}">{{ label }} · {{ items|length }}</span></h3>
+    {% for item in items %}
+    <div class="item {{ level }}">
+        <div class="item-title">{{ item.title }}</div>
         <div class="item-cat">{{ item.category }}</div>
-        <p class="item-text"><strong>Проблема:</strong> {{ item.text }}</p>
-        {% if item.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ item.fix }}</p>{% endif %}
+        <p class="item-text"><span class="label">Проблема:</span> {{ item.text }}</p>
+        {% if item.fix %}<p class="item-text"><span class="label fix">Как исправить:</span> {{ item.fix }}</p>{% endif %}
     </div>
     {% endfor %}
     {% endif %}
-
-    {% if warning_items %}
-    <h3 class="prio warning">Требует внимания</h3>
-    {% for item in warning_items %}
-    <div class="item warning">
-        <div class="item-head">
-            <span class="item-title">{{ item.title }}</span><span class="badge warning">Внимание</span>
-        </div>
-        <div class="item-cat">{{ item.category }}</div>
-        <p class="item-text"><strong>Проблема:</strong> {{ item.text }}</p>
-        {% if item.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ item.fix }}</p>{% endif %}
-    </div>
     {% endfor %}
-    {% endif %}
-
-    {% if info_items %}
-    <h3 class="prio info">Рекомендации</h3>
-    {% for item in info_items %}
-    <div class="item info">
-        <div class="item-head">
-            <span class="item-title">{{ item.title }}</span><span class="badge info">Рекомендация</span>
-        </div>
-        <div class="item-cat">{{ item.category }}</div>
-        <p class="item-text"><strong>Проблема:</strong> {{ item.text }}</p>
-        {% if item.fix %}<p class="item-text"><strong>Как исправить:</strong> {{ item.fix }}</p>{% endif %}
-    </div>
-    {% endfor %}
-    {% endif %}
 
     {% if not critical_items and not warning_items and not info_items %}
     <p>Критических проблем и предупреждений не обнаружено.</p>
     {% endif %}
 </section>
 
+<div class="cta">
+    <h2>Поможем <span class="accent">исправить</span></h2>
+    <p>Команда EvApps закроет найденные проблемы: техническое SEO, разметку, скорость и готовность сайта к ответам ИИ.
+    Пишите — <span class="accent">evapps.ru</span></p>
+</div>
 
 {% endif %}
 
