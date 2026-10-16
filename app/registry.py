@@ -52,6 +52,51 @@ def list_checks() -> list[dict]:
     return [dict(fn._check_meta) for fn in CHECKS if hasattr(fn, "_check_meta")]
 
 
+# Итоговый статус проверки = максимальный уровень её проблем (critical > warning; info/ok статус не
+# повышают). Статус, выставленный проверкой вручную, только повышается, никогда не понижается;
+# skipped/error не трогаем. Балл проверки ограничен потолком её статуса (critical ≤ 40, warning ≤ 80),
+# чтобы повышенная до critical проверка не тянула общий балл вверх. Общий балл = среднее баллов
+# проверок без skipped/error. Нормализация централизована: проверки могут не следить за статусом сами.
+STATUS_RANK = {"ok": 0, "warning": 1, "critical": 2}
+SCORE_CAP = {"ok": 100, "warning": 80, "critical": 40}
+UNRATED = ("skipped", "error")
+
+
+def _final_status(status: str, levels: List[str]) -> str:
+    if status in UNRATED:
+        return status
+    worst = max((lvl for lvl in levels if lvl in ("warning", "critical")), key=STATUS_RANK.get, default="ok")
+    return worst if STATUS_RANK[worst] > STATUS_RANK.get(status, 0) else status
+
+
+def normalize_check(r: CheckResult) -> CheckResult:
+    """Поднять статус проверки до худшей её проблемы и ограничить балл потолком статуса."""
+    r.status = _final_status(r.status, [f.level for f in r.findings])
+    if r.status in SCORE_CAP:
+        r.score = min(r.score, SCORE_CAP[r.status])
+    return r
+
+
+def _overall_score(scored: List[tuple[str, int]]) -> int:
+    scores = [score for status, score in scored if status not in UNRATED]
+    return int(round(sum(scores) / len(scores))) if scores else 0
+
+
+def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    """То же для сохранённого результата: статусы, summary и общий балл (старые аудиты в БД)."""
+    if result.get("blocked"):
+        return result
+    summary = {"critical": 0, "warning": 0, "ok": 0, "skipped": 0}
+    for c in result.get("checks", []):
+        c["status"] = _final_status(c.get("status", "ok"), [f.get("level") for f in c.get("findings", [])])
+        if c["status"] in SCORE_CAP and isinstance(c.get("score"), (int, float)):
+            c["score"] = min(c["score"], SCORE_CAP[c["status"]])
+        summary[c["status"] if c["status"] in summary else "skipped"] += 1
+    result["summary"] = summary
+    result["overall_score"] = _overall_score([(c["status"], c.get("score", 0)) for c in result.get("checks", [])])
+    return result
+
+
 def _summarize(results: List[CheckResult]) -> Dict[str, int]:
     """Сводка по статусам: error считается как skipped."""
     summary = {"critical": 0, "warning": 0, "ok": 0, "skipped": 0}
@@ -129,8 +174,7 @@ async def run_audit(
     async def run_one(fn: Callable[[AuditContext], Awaitable[CheckResult]]) -> CheckResult:
         async with semaphore:
             try:
-                res = await fn(ctx)
-                return res
+                return normalize_check(await fn(ctx))
             except Exception as e:
                 meta = getattr(fn, "_check_meta", {})
                 return CheckResult(
@@ -147,16 +191,7 @@ async def run_audit(
 
     await client.aclose()
 
-    # compute overall score
-    scores = []
-    for r in results:
-        if r.status in ("skipped", "error"):
-            continue
-        scores.append(r.score)
-    if scores:
-        overall_score = int(round(sum(scores) / len(scores)))
-    else:
-        overall_score = 0
+    overall_score = _overall_score([(r.status, r.score) for r in results])
 
     # build plan
     plan_findings: List[Dict[str, Any]] = []

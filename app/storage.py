@@ -52,6 +52,24 @@ def save_audit(result: Dict[str, Any]) -> int:
     return int(audit_id)
 
 
+def renormalize_all() -> int:
+    """Разово переписать все сохранённые аудиты по правилу статусов (статусы, summary, балл в истории)."""
+    from app.registry import normalize_result  # noqa: PLC0415
+
+    init_db()
+    conn = _connect()
+    rows = conn.execute("SELECT id, result_json FROM audits").fetchall()
+    for row in rows:
+        result = normalize_result(json.loads(row["result_json"]))
+        conn.execute(
+            "UPDATE audits SET score = ?, result_json = ? WHERE id = ?",
+            (result.get("overall_score", 0), json.dumps(result, ensure_ascii=False), row["id"]),
+        )
+    conn.commit()
+    conn.close()
+    return len(rows)
+
+
 def list_audits(limit: int = 50) -> List[Dict[str, Any]]:
     init_db()
     conn = _connect()
@@ -72,5 +90,9 @@ def get_audit(id: int) -> Dict[str, Any] | None:
     if not row:
         return None
     data = dict(row)
-    data["result"] = json.loads(data.pop("result_json"))
+    # Ленивый импорт: registry тянет за собой все проверки.
+    # Нормализация при чтении выравнивает статусы и summary у аудитов, сохранённых до появления правила.
+    from app.registry import normalize_result  # noqa: PLC0415
+
+    data["result"] = normalize_result(json.loads(data.pop("result_json")))
     return data
